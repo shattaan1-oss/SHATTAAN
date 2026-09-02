@@ -1,0 +1,6 @@
+{
+  "name": "SHATTAAN",
+  "description": "Premium e-commerce marketplace and online storefront for SHATTAAN (shattaan.com) featuring catalog browsing, smart search, cart, checkout, customer accounts, and full store management admin dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
