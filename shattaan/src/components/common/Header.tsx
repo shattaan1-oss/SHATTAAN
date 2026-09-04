@@ -497,10 +497,8 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-7">
             <button
               onClick={() => {
-                setCurrentView('catalog');
-                setSearchQuery('');
-                setSelectedCategory(null);
-              }}
+  window.location.href = '/shop';
+}}
               className={`hover:text-stone-950 transition-colors pb-0.5 ${
                 currentView === 'catalog' && !selectedCategory ? 'text-stone-950 font-bold border-b-2 border-stone-950' : ''
               }`}

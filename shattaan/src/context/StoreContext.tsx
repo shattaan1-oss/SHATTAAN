@@ -438,17 +438,12 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Navigation helpers
   const navigateToProduct = (productId: string) => {
-    setSelectedProductId(productId);
-    setCurrentView('product-detail');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  window.location.href = `/products/${productId}`;
+};
 
   const navigateToCategory = (categorySlug: string) => {
-    setSelectedCategory(categorySlug);
-    setSearchQuery('');
-    setCurrentView('catalog');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  window.location.href = `/shop/${categorySlug}`;
+};
 
   // Product CRUD
   const addProduct = (newProdData: Omit<Product, 'id' | 'createdAt'>): Product => {

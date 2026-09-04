@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ProductCard } from '../common/ProductCard';
 import {
@@ -34,7 +34,9 @@ export const CatalogView: React.FC<CatalogViewProps> = ({ initialCategory }) => 
     setCurrentView,
   } = useStore();
 
-  const currentActiveCategory = initialCategory || selectedCategory;
+  const currentActiveCategory = initialCategory || selectedCategory;useEffect(() => {
+  setSelectedCategory(initialCategory || null);
+}, [initialCategory, setSelectedCategory]);
 
   const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'digital' | 'physical'>('all');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating' | 'newest'>('featured');
@@ -273,7 +275,9 @@ export const CatalogView: React.FC<CatalogViewProps> = ({ initialCategory }) => 
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           <button
             id="filter-cat-all"
-            onClick={() => setSelectedCategory(null)}
+            onClick={() => {
+  window.location.href = '/shop';
+}}
             className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all min-h-[36px] ${
               selectedCategory === null
                 ? 'bg-stone-900 text-white shadow-xs'
