@@ -1,37 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useStore } from '../../context/StoreContext';
 import { Shield, FileText, Truck, RotateCcw, Award } from 'lucide-react';
 
 interface LegalViewProps {
   initialTab?: 'privacy' | 'terms' | 'shipping' | 'returns';
 }
 
-export const LegalView: React.FC<LegalViewProps> = ({ initialTab }) => {
-  const { currentView } = useStore();
-
-  const getInitialTab = () => {
-    if (initialTab) return initialTab;
-    if (currentView === 'privacy') return 'privacy';
-    if (currentView === 'terms') return 'terms';
-    if (currentView === 'shipping-returns') return 'shipping';
-    return 'shipping';
-  };
-
-  const [activeTab, setActiveTab] = useState<'privacy' | 'terms' | 'shipping' | 'returns'>(getInitialTab);
+export const LegalView: React.FC<LegalViewProps> = ({ initialTab = 'shipping' }) => {
+  const [activeTab, setActiveTab] = useState<'privacy' | 'terms' | 'shipping' | 'returns'>(initialTab);
 
   useEffect(() => {
     if (initialTab) {
       setActiveTab(initialTab);
-    } else if (currentView === 'privacy') {
-      setActiveTab('privacy');
-    } else if (currentView === 'terms') {
-      setActiveTab('terms');
-    } else if (currentView === 'shipping-returns') {
-      setActiveTab('shipping');
     }
-  }, [currentView, initialTab]);
+  }, [initialTab]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">

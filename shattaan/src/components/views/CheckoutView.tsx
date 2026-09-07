@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useStore } from '../../context/StoreContext';
 import { Address } from '../../types';
 import {
@@ -31,10 +33,10 @@ export const CheckoutView: React.FC = () => {
     isDigitalOnly,
     formatPrice,
     placeOrder,
-    setCurrentView,
     currentUser,
     addToast,
   } = useStore();
+  const router = useRouter();
 
   // Contact State
   const [email, setEmail] = useState(currentUser.email || '');
@@ -132,8 +134,7 @@ export const CheckoutView: React.FC = () => {
         console.error(err);
       }
 
-      window.location.hash = `#order-success?id=${order.orderNumber}`;
-      setCurrentView('order-success');
+      router.push(`/order-success?id=${order.orderNumber}`);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 1200);
   };
@@ -143,12 +144,12 @@ export const CheckoutView: React.FC = () => {
       <div className="max-w-xl mx-auto py-20 px-4 text-center space-y-4">
         <h2 className="text-2xl font-bold text-stone-900">Your bag is empty</h2>
         <p className="text-xs text-stone-500">Add items before proceeding to checkout.</p>
-        <button
-          onClick={() => setCurrentView('catalog')}
-          className="px-6 py-2.5 bg-stone-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider"
+        <Link
+          href="/shop"
+          className="inline-block px-6 py-2.5 bg-stone-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider"
         >
           Return to Store
-        </button>
+        </Link>
       </div>
     );
   }
@@ -158,12 +159,12 @@ export const CheckoutView: React.FC = () => {
       {/* Checkout Breadcrumb / Header */}
       <div className="border-b border-stone-200 pb-6 flex items-center justify-between">
         <div>
-          <button
-            onClick={() => setCurrentView('cart')}
+          <Link
+            href="/cart"
             className="text-xs font-bold text-stone-500 hover:text-stone-900 flex items-center gap-1.5 mb-1.5"
           >
             <ArrowLeft className="w-4 h-4" /> Return to Bag
-          </button>
+          </Link>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-950">
             Secure Checkout
           </h1>

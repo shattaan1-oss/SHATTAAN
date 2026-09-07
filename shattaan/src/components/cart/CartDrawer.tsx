@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useStore } from '../../context/StoreContext';
 import {
   X,
@@ -31,9 +33,9 @@ export const CartDrawer: React.FC = () => {
     shippingAmount,
     cartTotal,
     formatPrice,
-    setCurrentView,
-    navigateToProduct,
+    products,
   } = useStore();
+  const router = useRouter();
 
   const [promoInput, setPromoInput] = useState('');
   const [promoFeedback, setPromoFeedback] = useState<{ isError: boolean; text: string } | null>(
@@ -70,13 +72,13 @@ export const CartDrawer: React.FC = () => {
 
   const handleProceedToCheckout = () => {
     setIsCartDrawerOpen(false);
-    setCurrentView('checkout');
+    router.push('/checkout');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleViewFullCart = () => {
     setIsCartDrawerOpen(false);
-    setCurrentView('cart');
+    router.push('/cart');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -162,45 +164,47 @@ export const CartDrawer: React.FC = () => {
                   <p className="text-xs text-stone-500 max-w-xs mt-1 leading-relaxed">
                     Explore our curated collection of luxury apparel, fine leather, and artisanal pieces.
                   </p>
-                  <button
+                  <Link
+                    id="cart-drawer-explore-catalog"
+                    href="/shop"
                     onClick={() => {
                       setIsCartDrawerOpen(false);
-                      setCurrentView('catalog');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="mt-5 px-6 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-colors"
+                    className="mt-5 px-6 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-colors inline-block"
                   >
                     Explore Catalog
-                  </button>
+                  </Link>
                 </div>
               ) : (
                 cart.map((item) => (
                   <div key={item.id} className="py-4 flex gap-4 items-start first:pt-0">
                     {/* Item Image */}
-                    <div
+                    <Link
+                      href={`/products/${products.find((p) => p.id === item.productId)?.slug || item.productId}`}
                       onClick={() => {
                         setIsCartDrawerOpen(false);
-                        navigateToProduct(item.productId);
                       }}
-                      className="w-20 h-20 rounded-xl overflow-hidden bg-stone-100 shrink-0 cursor-pointer border border-stone-200/80"
+                      className="w-20 h-20 rounded-xl overflow-hidden bg-stone-100 shrink-0 cursor-pointer border border-stone-200/80 block"
                     >
                       <img
                         src={item.image}
                         alt={item.title}
                         className="w-full h-full object-cover"
                       />
-                    </div>
+                    </Link>
 
                     {/* Item Details */}
                     <div className="flex-1 min-w-0">
-                      <h4
+                      <Link
+                        href={`/products/${products.find((p) => p.id === item.productId)?.slug || item.productId}`}
                         onClick={() => {
                           setIsCartDrawerOpen(false);
-                          navigateToProduct(item.productId);
                         }}
-                        className="text-sm font-bold text-stone-900 hover:text-stone-600 line-clamp-1 cursor-pointer"
+                        className="text-sm font-bold text-stone-900 hover:text-stone-600 line-clamp-1 cursor-pointer block"
                       >
                         {item.title}
-                      </h4>
+                      </Link>
 
                       <div className="flex flex-wrap gap-2 text-[11px] text-stone-500 mt-0.5">
                         {item.selectedColor && (

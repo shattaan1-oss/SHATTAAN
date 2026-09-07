@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import {
   CheckCircle2,
@@ -23,32 +24,15 @@ interface OrderSuccessViewProps {
 }
 
 export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({ initialOrder }) => {
-  const { recentOrder, orders, formatPrice, setCurrentView } = useStore();
+  const { recentOrder, orders, formatPrice } = useStore();
   const searchParams = useSearchParams();
 
   const queryOrderId = searchParams ? searchParams.get('id') || searchParams.get('orderId') : null;
 
-  // Parse order ID from URL hash parameters if present
-  const getTargetOrderIdFromHash = (): string | null => {
-    if (typeof window === 'undefined') return null;
-    const hash = window.location.hash || '';
-    const queryIndex = hash.indexOf('?');
-    if (queryIndex !== -1) {
-      const queryString = hash.substring(queryIndex + 1);
-      const params = new URLSearchParams(queryString);
-      const idParam = params.get('id') || params.get('orderId');
-      if (idParam) return idParam.trim();
-    }
-    return null;
-  };
-
-  const hashOrderId = getTargetOrderIdFromHash();
-  const targetId = queryOrderId || hashOrderId;
-
   let resolvedOrder: Order | null = initialOrder || null;
-  if (!resolvedOrder && targetId) {
+  if (!resolvedOrder && queryOrderId) {
     resolvedOrder =
-      orders.find((o) => o.id === targetId || o.orderNumber === targetId) || null;
+      orders.find((o) => o.id === queryOrderId || o.orderNumber === queryOrderId) || null;
   } else if (!resolvedOrder && recentOrder) {
     resolvedOrder = recentOrder;
   }
@@ -64,30 +48,24 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({ initialOrder
         <div className="space-y-1.5">
           <h2 className="text-xl font-bold text-stone-900">No Order Found</h2>
           <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
-            {hashOrderId
-              ? `We could not locate an order matching identifier "${hashOrderId}". It may have expired or was placed in another browser session.`
+            {queryOrderId
+              ? `We could not locate an order matching identifier "${queryOrderId}". It may have expired or was placed in another browser session.`
               : 'No active order receipt was specified or found for this session.'}
           </p>
         </div>
         <div className="flex items-center justify-center gap-3 pt-2">
-          <button
-            onClick={() => {
-              setCurrentView('catalog');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="px-6 py-2.5 bg-stone-950 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-stone-800 transition-colors"
+          <Link
+            href="/shop"
+            className="px-6 py-2.5 bg-stone-950 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-stone-800 transition-colors inline-block"
           >
             Browse Catalog
-          </button>
-          <button
-            onClick={() => {
-              setCurrentView('account');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="px-6 py-2.5 bg-stone-100 text-stone-800 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-stone-200 transition-colors border border-stone-300"
+          </Link>
+          <Link
+            href="/account"
+            className="px-6 py-2.5 bg-stone-100 text-stone-800 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-stone-200 transition-colors border border-stone-300 inline-block"
           >
             My Account
-          </button>
+          </Link>
         </div>
       </div>
     );
@@ -338,26 +316,20 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({ initialOrder
 
       {/* Next Actions */}
       <div className="no-print flex flex-col sm:flex-row items-center justify-center gap-4">
-        <button
-          onClick={() => {
-            setCurrentView('catalog');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
+        <Link
+          href="/shop"
           className="w-full sm:w-auto px-8 py-3.5 bg-stone-950 hover:bg-stone-800 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 cursor-pointer"
         >
           <span>Continue Exploring</span>
           <ArrowRight className="w-4 h-4" />
-        </button>
+        </Link>
 
-        <button
-          onClick={() => {
-            setCurrentView('account');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          className="w-full sm:w-auto px-6 py-3.5 bg-stone-100 hover:bg-stone-200 text-stone-900 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+        <Link
+          href="/account"
+          className="w-full sm:w-auto px-6 py-3.5 bg-stone-100 hover:bg-stone-200 text-stone-900 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer text-center"
         >
           View in Customer Account
-        </button>
+        </Link>
       </div>
     </div>
   );

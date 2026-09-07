@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useStore } from '../../context/StoreContext';
 import { ProductCard } from '../common/ProductCard';
 import {
@@ -41,12 +43,11 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ initialPro
     addToCart,
     toggleWishlist,
     isInWishlist,
-    setCurrentView,
-    navigateToCategory,
     getProductReviews,
     addReview,
     addToast,
   } = useStore();
+  const router = useRouter();
 
   // Lookup product from props or store
   const product =
@@ -196,25 +197,19 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ initialPro
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
-          <button
-            onClick={() => {
-              setCurrentView('catalog');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Link
+            href="/shop"
             className="w-full sm:w-auto px-6 py-3.5 bg-stone-950 hover:bg-stone-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-md flex items-center justify-center gap-2"
           >
             <ShoppingBag className="w-4 h-4" />
             Return to Marketplace
-          </button>
-          <button
-            onClick={() => {
-              setCurrentView('home');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="w-full sm:w-auto px-6 py-3.5 bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-xs"
+          </Link>
+          <Link
+            href="/"
+            className="w-full sm:w-auto px-6 py-3.5 bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-xs flex items-center justify-center"
           >
             Return Home
-          </button>
+          </Link>
         </div>
       </div>
     );
@@ -261,7 +256,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ initialPro
       return;
     }
     addToCart(product, quantity, selectedColor, selectedSize);
-    setCurrentView('checkout');
+    router.push('/checkout');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -321,22 +316,19 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ initialPro
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-16">
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-stone-500 uppercase tracking-widest">
-        <button
-          onClick={() => {
-            setCurrentView('home');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
+        <Link
+          href="/"
           className="hover:text-stone-900 focus:outline-none focus-visible:underline"
         >
           Home
-        </button>
+        </Link>
         <ChevronRight className="w-3.5 h-3.5 text-stone-400" aria-hidden="true" />
-        <button
-          onClick={() => navigateToCategory(product.category)}
+        <Link
+          href={`/shop/${product.category}`}
           className="hover:text-stone-900 focus:outline-none focus-visible:underline"
         >
           {categories.find((c) => c.slug === product.category)?.name || product.category}
-        </button>
+        </Link>
         <ChevronRight className="w-3.5 h-3.5 text-stone-400" aria-hidden="true" />
         <span className="text-stone-900 truncate max-w-xs" aria-current="page">{product.title}</span>
       </nav>

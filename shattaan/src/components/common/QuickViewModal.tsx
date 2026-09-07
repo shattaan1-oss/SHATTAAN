@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import { X, Star, ShoppingBag, Heart, ArrowRight, Truck, Box, Sparkles, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -13,7 +14,6 @@ export const QuickViewModal: React.FC = () => {
     addToCart,
     toggleWishlist,
     isInWishlist,
-    navigateToProduct,
   } = useStore();
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -364,15 +364,16 @@ export const QuickViewModal: React.FC = () => {
                       </>
                     )}
                   </span>
-                  <button
+                  <Link
+                    id="quickview-full-specs-link"
+                    href={`/products/${product.slug}`}
                     onClick={() => {
                       setQuickViewProduct(null);
-                      navigateToProduct(product.id);
                     }}
                     className="font-bold text-stone-900 hover:underline flex items-center gap-1 min-h-[36px]"
                   >
                     Full Product Specifications <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

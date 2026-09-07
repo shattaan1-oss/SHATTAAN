@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
-import { useStore } from '../../context/StoreContext';
+import Link from 'next/link';
 import { ShieldCheck, Sparkles, Globe, Heart, Award, ArrowRight } from 'lucide-react';
 
 export const AboutView: React.FC = () => {
-  const { setCurrentView } = useStore();
 
   return (
     <div className="space-y-16 py-8 sm:py-12">
@@ -87,16 +86,16 @@ export const AboutView: React.FC = () => {
             "We do not design for a single season. We create heirlooms for the discerning few."
           </h2>
           <div className="pt-4">
-            <button
+            <Link
+              href="/shop"
               onClick={() => {
-                setCurrentView('catalog');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               className="px-8 py-3.5 bg-amber-400 hover:bg-amber-300 text-stone-950 rounded-xl text-xs font-extrabold uppercase tracking-widest transition-colors inline-flex items-center gap-2"
             >
               <span>Explore The Collection</span>
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
         </div>
       </section>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import {
   ShoppingBag,
@@ -31,8 +32,7 @@ export const CartView: React.FC = () => {
     taxAmount,
     cartTotal,
     formatPrice,
-    setCurrentView,
-    navigateToProduct,
+    products,
   } = useStore();
 
   const [promoCodeInput, setPromoCodeInput] = useState('');
@@ -62,16 +62,16 @@ export const CartView: React.FC = () => {
         <p className="text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
           You have not added any pieces to your bag yet. Explore our curated selection of luxury goods and bespoke fashion.
         </p>
-        <button
+        <Link
+          href="/shop"
           onClick={() => {
-            setCurrentView('catalog');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className="px-8 py-3.5 bg-stone-950 hover:bg-stone-800 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-colors inline-flex items-center gap-2"
         >
           <span>Explore Catalog</span>
           <ArrowRight className="w-4 h-4" />
-        </button>
+        </Link>
       </div>
     );
   }
@@ -81,12 +81,12 @@ export const CartView: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-stone-200 pb-6">
         <div>
-          <button
-            onClick={() => setCurrentView('catalog')}
+          <Link
+            href="/shop"
             className="text-xs font-bold text-stone-500 hover:text-stone-900 flex items-center gap-1.5 mb-2"
           >
             <ArrowLeft className="w-4 h-4" /> Continue Shopping
-          </button>
+          </Link>
           <h1 className="text-3xl font-extrabold text-stone-950">
             Shopping Bag ({cart.reduce((s, i) => s + i.quantity, 0)} Items)
           </h1>
@@ -116,12 +116,12 @@ export const CartView: React.FC = () => {
               Add <strong className="text-stone-950">{formatPrice(amountUntilFreeShipping)}</strong> more to unlock complimentary global express shipping.
             </span>
           </div>
-          <button
-            onClick={() => setCurrentView('catalog')}
+          <Link
+            href="/shop"
             className="font-bold text-stone-950 hover:underline"
           >
             Browse More →
-          </button>
+          </Link>
         </div>
       ) : (
         <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2 font-bold">
@@ -137,21 +137,21 @@ export const CartView: React.FC = () => {
           {cart.map((item) => (
             <div key={item.id} className="py-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
               {/* Product Thumbnail */}
-              <div
-                onClick={() => navigateToProduct(item.productId)}
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-stone-100 overflow-hidden shrink-0 cursor-pointer border border-stone-200"
+              <Link
+                href={`/products/${products.find((p) => p.id === item.productId)?.slug || item.productId}`}
+                className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-stone-100 overflow-hidden shrink-0 cursor-pointer border border-stone-200 block"
               >
                 <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-              </div>
+              </Link>
 
               {/* Product Info */}
               <div className="flex-1 min-w-0">
-                <h3
-                  onClick={() => navigateToProduct(item.productId)}
-                  className="text-base font-bold text-stone-950 hover:text-stone-600 cursor-pointer"
+                <Link
+                  href={`/products/${products.find((p) => p.id === item.productId)?.slug || item.productId}`}
+                  className="text-base font-bold text-stone-950 hover:text-stone-600 cursor-pointer block"
                 >
                   {item.title}
-                </h3>
+                </Link>
 
                 <div className="flex flex-wrap gap-2 text-xs text-stone-500 mt-1">
                   {item.selectedColor && (
@@ -293,16 +293,16 @@ export const CartView: React.FC = () => {
           </div>
 
           {/* Checkout CTA */}
-          <button
+          <Link
+            href="/checkout"
             onClick={() => {
-              setCurrentView('checkout');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             className="w-full py-4 bg-stone-950 hover:bg-stone-800 text-white rounded-xl text-xs font-extrabold uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2"
           >
             <span>Proceed to Secure Checkout</span>
             <ArrowRight className="w-4 h-4" />
-          </button>
+          </Link>
 
           <div className="space-y-2 pt-2 text-[11px] text-stone-500">
             <div className="flex items-center gap-2">

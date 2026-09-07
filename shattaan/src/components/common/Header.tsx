@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { useStore } from '../../context/StoreContext';
 import { CurrencyCode } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
@@ -34,16 +36,12 @@ import {
 
 export const Header: React.FC = () => {
   const {
-    currentView,
-    setCurrentView,
     cartCount,
     wishlist,
     setIsCartDrawerOpen,
     categories,
     selectedCategory,
     setSelectedCategory,
-    navigateToCategory,
-    navigateToProduct,
     searchQuery,
     setSearchQuery,
     currency,
@@ -52,6 +50,12 @@ export const Header: React.FC = () => {
     products,
     currentUser,
   } = useStore();
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const isAdmin = pathname ? pathname.startsWith('/admin') : false;
+  const isShopAll = pathname === '/shop' && !searchQuery;
+  const isCategoryActive = (slug: string) => pathname === `/shop/${slug}`;
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -148,7 +152,7 @@ export const Header: React.FC = () => {
   // Automatically close mobile menu when navigating views
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [currentView, selectedCategory]);
+  }, [pathname, selectedCategory]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,7 +160,7 @@ export const Header: React.FC = () => {
       setIsSearchOpen(false);
       setIsMobileMenuOpen(false);
       setSelectedCategory(null);
-      setCurrentView('catalog');
+      router.push('/shop');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -226,24 +230,18 @@ export const Header: React.FC = () => {
           <span className="text-stone-700 hidden sm:inline">•</span>
 
           {/* Admin Dashboard Switch Button */}
-          <button
+          <Link
             id="header-admin-toggle"
-            onClick={() => {
-              if (currentView === 'admin') {
-                setCurrentView('home');
-              } else {
-                setCurrentView('admin');
-              }
-            }}
+            href={isAdmin ? '/' : '/admin'}
             className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all ${
-              currentView === 'admin'
+              isAdmin
                 ? 'bg-amber-400 text-stone-950 shadow-xs'
                 : 'bg-stone-800 text-stone-200 hover:bg-stone-700 hover:text-white border border-stone-700'
             }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
-            <span>{currentView === 'admin' ? 'Exit Admin' : 'Admin'}</span>
-          </button>
+            <span>{isAdmin ? 'Exit Admin' : 'Admin'}</span>
+          </Link>
         </div>
       </div>
 
@@ -263,9 +261,9 @@ export const Header: React.FC = () => {
           </button>
 
           {/* Brand Logo & Domain Branding */}
-          <div
+          <Link
+            href="/"
             onClick={() => {
-              setCurrentView('home');
               setSearchQuery('');
               setSelectedCategory(null);
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -283,7 +281,7 @@ export const Header: React.FC = () => {
                 shattaan.com
               </span>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Search Bar with Live Autocomplete */}
           <div className="hidden md:flex flex-1 max-w-md mx-6 relative" ref={searchRef}>
@@ -318,15 +316,15 @@ export const Header: React.FC = () => {
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-stone-200 overflow-hidden z-50">
                 <div className="p-3 bg-stone-50 border-b border-stone-100 flex items-center justify-between text-xs font-semibold text-stone-600">
                   <span>Matched Results ({searchResults.length})</span>
-                  <button
+                  <Link
+                    href="/shop"
                     onClick={() => {
                       setIsSearchOpen(false);
-                      setCurrentView('catalog');
                     }}
                     className="text-stone-900 font-bold hover:underline"
                   >
                     View all results →
-                  </button>
+                  </Link>
                 </div>
 
                 {searchResults.length === 0 ? (
@@ -336,11 +334,11 @@ export const Header: React.FC = () => {
                 ) : (
                   <div className="divide-y divide-stone-100 max-h-80 overflow-y-auto">
                     {searchResults.map((item) => (
-                      <div
+                      <Link
                         key={item.id}
+                        href={`/products/${item.slug}`}
                         onClick={() => {
                           setIsSearchOpen(false);
-                          navigateToProduct(item.id);
                         }}
                         className="p-3 flex items-center gap-3 hover:bg-stone-50 cursor-pointer transition-colors"
                       >
@@ -360,7 +358,7 @@ export const Header: React.FC = () => {
                         <span className="text-xs font-extrabold text-stone-900">
                           {formatPrice(item.price)}
                         </span>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -371,9 +369,9 @@ export const Header: React.FC = () => {
           {/* Right Action Icons */}
           <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Wishlist Button */}
-            <button
+            <Link
               id="header-wishlist-btn"
-              onClick={() => setCurrentView('wishlist')}
+              href="/wishlist"
               className="relative p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-stone-700 hover:text-stone-950 hover:bg-stone-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900"
               title="Saved Items"
               aria-label="Wishlist"
@@ -384,7 +382,7 @@ export const Header: React.FC = () => {
                   {wishlist.length}
                 </span>
               )}
-            </button>
+            </Link>
 
             {/* Shopping Bag Button */}
             <button
@@ -432,59 +430,49 @@ export const Header: React.FC = () => {
                   </div>
 
                   <div className="py-1">
-                    <button
-                      onClick={() => {
-                        setIsAccountMenuOpen(false);
-                        setCurrentView('account');
-                      }}
+                    <Link
+                      href="/account"
+                      onClick={() => setIsAccountMenuOpen(false)}
                       className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-stone-50 hover:text-stone-950 flex items-center gap-2"
                     >
                       <User className="w-4 h-4 text-stone-400" />
                       <span>Account Dashboard</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsAccountMenuOpen(false);
-                        setCurrentView('account');
-                      }}
+                    </Link>
+                    <Link
+                      href="/account"
+                      onClick={() => setIsAccountMenuOpen(false)}
                       className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-stone-50 hover:text-stone-950 flex items-center gap-2"
                     >
                       <Package className="w-4 h-4 text-stone-400" />
                       <span>Order History</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsAccountMenuOpen(false);
-                        setCurrentView('track-order');
-                      }}
+                    </Link>
+                    <Link
+                      href="/account"
+                      onClick={() => setIsAccountMenuOpen(false)}
                       className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-stone-50 hover:text-stone-950 flex items-center gap-2"
                     >
                       <Truck className="w-4 h-4 text-stone-400" />
                       <span>Track Shipment</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsAccountMenuOpen(false);
-                        setCurrentView('wishlist');
-                      }}
+                    </Link>
+                    <Link
+                      href="/wishlist"
+                      onClick={() => setIsAccountMenuOpen(false)}
                       className="w-full text-left px-4 py-2 text-xs text-stone-700 hover:bg-stone-50 hover:text-stone-950 flex items-center gap-2"
                     >
                       <Heart className="w-4 h-4 text-stone-400" />
                       <span>Saved Favorites ({wishlist.length})</span>
-                    </button>
+                    </Link>
                   </div>
 
                   <div className="py-1">
-                    <button
-                      onClick={() => {
-                        setIsAccountMenuOpen(false);
-                        setCurrentView('admin');
-                      }}
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsAccountMenuOpen(false)}
                       className="w-full text-left px-4 py-2 text-xs font-bold text-amber-900 bg-amber-50/70 hover:bg-amber-100 flex items-center gap-2"
                     >
                       <LayoutDashboard className="w-4 h-4 text-amber-700" />
                       <span>Store Admin Dashboard</span>
-                    </button>
+                    </Link>
                   </div>
                 </div>
               )}
@@ -495,43 +483,46 @@ export const Header: React.FC = () => {
         {/* Desktop Category Navigation Bar */}
         <nav className="hidden lg:flex items-center justify-between border-t border-stone-100 py-3 text-xs uppercase tracking-widest font-semibold text-stone-600">
           <div className="flex items-center gap-7">
-            <button
+            <Link
+              href="/shop"
               onClick={() => {
-  window.location.href = '/shop';
-}}
+                setSearchQuery('');
+                setSelectedCategory(null);
+              }}
               className={`hover:text-stone-950 transition-colors pb-0.5 ${
-                currentView === 'catalog' && !selectedCategory ? 'text-stone-950 font-bold border-b-2 border-stone-950' : ''
+                isShopAll && !selectedCategory ? 'text-stone-950 font-bold border-b-2 border-stone-950' : ''
               }`}
             >
               All Marketplace
-            </button>
+            </Link>
 
             {categories.map((cat) => (
-              <button
+              <Link
                 key={cat.id}
-                onClick={() => navigateToCategory(cat.slug)}
+                href={`/shop/${cat.slug}`}
+                onClick={() => setSelectedCategory(cat.slug)}
                 className={`hover:text-stone-950 transition-colors pb-0.5 ${
-                  currentView === 'catalog' && selectedCategory === cat.slug ? 'text-stone-950 font-bold border-b-2 border-stone-950' : ''
+                  isCategoryActive(cat.slug) ? 'text-stone-950 font-bold border-b-2 border-stone-950' : ''
                 }`}
               >
                 {cat.name}
-              </button>
+              </Link>
             ))}
           </div>
 
           <div className="flex items-center gap-6 normal-case text-xs tracking-normal font-medium text-stone-500">
-            <button
-              onClick={() => setCurrentView('about')}
+            <Link
+              href="/about"
               className="hover:text-stone-900 transition-colors"
             >
               About SHATTAAN
-            </button>
-            <button
-              onClick={() => setCurrentView('contact')}
+            </Link>
+            <Link
+              href="/contact"
               className="hover:text-stone-900 transition-colors"
             >
               Concierge Contact
-            </button>
+            </Link>
           </div>
         </nav>
       </div>
@@ -600,16 +591,16 @@ export const Header: React.FC = () => {
 
                   <div className="space-y-1.5">
                     {/* All Marketplace Link */}
-                    <button
+                    <Link
+                      href="/shop"
                       onClick={() => {
                         setSelectedCategory(null);
                         setSearchQuery('');
-                        setCurrentView('catalog');
                         setIsMobileMenuOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between group min-h-[48px] ${
-                        currentView === 'catalog' && !selectedCategory && !searchQuery
+                        isShopAll && !selectedCategory
                           ? 'bg-stone-900 text-white shadow-sm'
                           : 'bg-white hover:bg-stone-100 border border-stone-200/80 text-stone-900'
                       }`}
@@ -617,7 +608,7 @@ export const Header: React.FC = () => {
                       <div className="flex items-center gap-3 min-w-0">
                         <div
                           className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                            currentView === 'catalog' && !selectedCategory && !searchQuery
+                            isShopAll && !selectedCategory
                               ? 'bg-stone-800 text-amber-300'
                               : 'bg-stone-100 text-stone-700'
                           }`}
@@ -630,7 +621,7 @@ export const Header: React.FC = () => {
                           </span>
                           <span
                             className={`text-[11px] block leading-tight truncate ${
-                              currentView === 'catalog' && !selectedCategory && !searchQuery
+                              isShopAll && !selectedCategory
                                 ? 'text-stone-300'
                                 : 'text-stone-500'
                             }`}
@@ -641,27 +632,27 @@ export const Header: React.FC = () => {
                       </div>
                       <ChevronRight
                         className={`w-4 h-4 shrink-0 transition-transform group-hover:translate-x-0.5 ${
-                          currentView === 'catalog' && !selectedCategory && !searchQuery
+                          isShopAll && !selectedCategory
                             ? 'text-amber-300'
                             : 'text-stone-400'
                         }`}
                       />
-                    </button>
+                    </Link>
 
                     {/* Six Specific Categories */}
                     {categories.map((cat) => {
-                      const isSelected =
-                        currentView === 'catalog' && selectedCategory === cat.slug;
+                      const isSelected = isCategoryActive(cat.slug);
                       const meta = categoryMetadata[cat.slug] || {
                         icon: <Package className="w-4 h-4 text-stone-700" />,
                         subtitle: cat.description,
                       };
 
                       return (
-                        <button
+                        <Link
                           key={cat.id}
+                          href={`/shop/${cat.slug}`}
                           onClick={() => {
-                            navigateToCategory(cat.slug);
+                            setSelectedCategory(cat.slug);
                             setIsMobileMenuOpen(false);
                           }}
                           className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between group min-h-[48px] ${
@@ -698,7 +689,7 @@ export const Header: React.FC = () => {
                               isSelected ? 'text-amber-300' : 'text-stone-400'
                             }`}
                           />
-                        </button>
+                        </Link>
                       );
                     })}
                   </div>
@@ -713,11 +704,11 @@ export const Header: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <button
+                    <Link
+                      href="/shop"
                       onClick={() => {
                         setSelectedCategory(null);
                         setSearchQuery('Digital');
-                        setCurrentView('catalog');
                         setIsMobileMenuOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
@@ -732,13 +723,13 @@ export const Header: React.FC = () => {
                           Instant master files
                         </span>
                       </div>
-                    </button>
+                    </Link>
 
-                    <button
+                    <Link
+                      href="/shop"
                       onClick={() => {
                         setSelectedCategory(null);
                         setSearchQuery('');
-                        setCurrentView('catalog');
                         setIsMobileMenuOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
@@ -753,13 +744,13 @@ export const Header: React.FC = () => {
                           Courier shipping
                         </span>
                       </div>
-                    </button>
+                    </Link>
 
-                    <button
+                    <Link
+                      href="/shop"
                       onClick={() => {
                         setSelectedCategory(null);
                         setSearchQuery('New');
-                        setCurrentView('catalog');
                         setIsMobileMenuOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
@@ -774,13 +765,13 @@ export const Header: React.FC = () => {
                           2026 releases
                         </span>
                       </div>
-                    </button>
+                    </Link>
 
-                    <button
+                    <Link
+                      href="/shop"
                       onClick={() => {
                         setSelectedCategory(null);
                         setSearchQuery('Best Seller');
-                        setCurrentView('catalog');
                         setIsMobileMenuOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
@@ -795,7 +786,7 @@ export const Header: React.FC = () => {
                           Client favorites
                         </span>
                       </div>
-                    </button>
+                    </Link>
                   </div>
                 </div>
 
@@ -808,9 +799,9 @@ export const Header: React.FC = () => {
                   </div>
 
                   <div className="bg-white border border-stone-200/80 rounded-2xl divide-y divide-stone-100 overflow-hidden shadow-2xs">
-                    <button
+                    <Link
+                      href="/account"
                       onClick={() => {
-                        setCurrentView('account');
                         setIsMobileMenuOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
@@ -821,11 +812,11 @@ export const Header: React.FC = () => {
                         <span>VIP Account & Orders</span>
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                    </button>
+                    </Link>
 
-                    <button
+                    <Link
+                      href="/wishlist"
                       onClick={() => {
-                        setCurrentView('wishlist');
                         setIsMobileMenuOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
@@ -836,11 +827,11 @@ export const Header: React.FC = () => {
                         <span>Saved Wishlist ({wishlist.length})</span>
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                    </button>
+                    </Link>
 
-                    <button
+                    <Link
+                      href="/about"
                       onClick={() => {
-                        setCurrentView('about');
                         setIsMobileMenuOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
@@ -851,11 +842,11 @@ export const Header: React.FC = () => {
                         <span>About SHATTAAN (shattaan.com)</span>
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                    </button>
+                    </Link>
 
-                    <button
+                    <Link
+                      href="/contact"
                       onClick={() => {
-                        setCurrentView('contact');
                         setIsMobileMenuOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
@@ -866,11 +857,11 @@ export const Header: React.FC = () => {
                         <span>Concierge Contact & Support</span>
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                    </button>
+                    </Link>
 
-                    <button
+                    <Link
+                      href="/shipping-returns"
                       onClick={() => {
-                        setCurrentView('shipping-returns');
                         setIsMobileMenuOpen(false);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
@@ -881,23 +872,23 @@ export const Header: React.FC = () => {
                         <span>Shipping & Returns Policy</span>
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-                    </button>
+                    </Link>
                   </div>
                 </div>
 
                 {/* 5. Store Admin Portal & Currency Control */}
                 <div className="space-y-3 pt-2">
-                  <button
+                  <Link
+                    href="/admin"
                     onClick={() => {
                       setIsMobileMenuOpen(false);
-                      setCurrentView('admin');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     className="w-full py-3.5 px-4 bg-stone-900 hover:bg-stone-800 text-amber-300 font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-md transition-colors min-h-[44px]"
                   >
                     <LayoutDashboard className="w-4 h-4 text-amber-400" />
                     <span>Store Admin Dashboard</span>
-                  </button>
+                  </Link>
 
                   <div className="flex items-center justify-between px-2 pt-1 text-[11px] text-stone-500">
                     <span className="font-mono uppercase tracking-wider">Currency:</span>

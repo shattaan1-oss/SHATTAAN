@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import { ProductCard } from '../common/ProductCard';
 import { Heart, ShoppingBag, ArrowRight, Trash2 } from 'lucide-react';
 
 export const WishlistView: React.FC = () => {
-  const { wishlist, products, addToCart, clearWishlist, setCurrentView, addToast } = useStore();
+  const { wishlist, products, addToCart, clearWishlist, addToast } = useStore();
 
   const wishlistProducts = products.filter((p) => wishlist.includes(p.id));
 
@@ -33,16 +34,16 @@ export const WishlistView: React.FC = () => {
         <p className="text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
           Save timeless items you love to your personal curation by clicking the heart icon on any product card.
         </p>
-        <button
+        <Link
+          href="/shop"
           onClick={() => {
-            setCurrentView('catalog');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className="px-8 py-3.5 bg-stone-950 hover:bg-stone-800 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-colors inline-flex items-center gap-2"
         >
           <span>Explore Catalog</span>
           <ArrowRight className="w-4 h-4" />
-        </button>
+        </Link>
       </div>
     );
   }

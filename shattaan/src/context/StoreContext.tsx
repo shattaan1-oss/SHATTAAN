@@ -9,7 +9,6 @@ import {
   Customer,
   Review,
   DiscountCode,
-  NavigationView,
   AdminTab,
   CurrencyCode,
   OrderStatus,
@@ -34,9 +33,7 @@ export interface ToastMessage {
 }
 
 export interface StoreContextType {
-  // Navigation & View
-  currentView: NavigationView;
-  setCurrentView: (view: NavigationView) => void;
+  // Navigation & View Selection State
   selectedProductId: string | null;
   setSelectedProductId: (id: string | null) => void;
   selectedCategory: string | null;
@@ -49,8 +46,6 @@ export interface StoreContextType {
   setIsCartDrawerOpen: (open: boolean) => void;
   quickViewProduct: Product | null;
   setQuickViewProduct: (product: Product | null) => void;
-  navigateToProduct: (productId: string) => void;
-  navigateToCategory: (categorySlug: string) => void;
 
   // Currency
   currency: CurrencyCode;
@@ -138,94 +133,19 @@ const CURRENCY_RATES: Record<CurrencyCode, { symbol: string; rate: number; prefi
   CAD: { symbol: 'CA$', rate: 1.36, prefix: true },
 };
 
-// Helper to parse location hash into view state
-const parseHashState = (
-  hash: string
-): {
-  view: NavigationView;
-  productId: string | null;
-  category: string | null;
-} => {
-  const clean = hash.replace(/^#\/?/, '').trim();
-  if (!clean || clean === 'home') {
-    return { view: 'home', productId: null, category: null };
-  }
-  if (clean.startsWith('product=')) {
-    const pid = clean.replace('product=', '').trim();
-    return { view: 'product-detail', productId: pid || null, category: null };
-  }
-  if (clean.startsWith('category=')) {
-    const cat = clean.replace('category=', '').trim();
-    return { view: 'catalog', productId: null, category: cat || null };
-  }
-  if (clean.startsWith('order-success')) {
-    return { view: 'order-success', productId: null, category: null };
-  }
-  const validViews: NavigationView[] = [
-    'home',
-    'catalog',
-    'product-detail',
-    'cart',
-    'checkout',
-    'order-success',
-    'account',
-    'wishlist',
-    'about',
-    'contact',
-    'privacy',
-    'terms',
-    'shipping-returns',
-    'track-order',
-    'admin',
-  ];
-  if (validViews.includes(clean as NavigationView)) {
-    return { view: clean as NavigationView, productId: null, category: null };
-  }
-  return { view: 'home', productId: null, category: null };
-};
-
-const buildHashString = (
-  view: NavigationView,
-  productId: string | null,
-  category: string | null
-): string => {
-  if (view === 'home') return '';
-  if (view === 'product-detail' && productId) return `#product=${productId}`;
-  if (view === 'catalog' && category) return `#category=${category}`;
-  return `#${view}`;
-};
-
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Initial Hash parsing for deep linking
-  const initialUrlState = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      return parseHashState(window.location.hash);
-    }
-    return { view: 'home' as NavigationView, productId: null, category: null };
-  }, []);
-
-  // Navigation
-  const [currentView, setCurrentView] = useState<NavigationView>(initialUrlState.view);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(initialUrlState.productId);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialUrlState.category);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [adminTab, setAdminTab] = useState<AdminTab>('dashboard');
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState<boolean>(false);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [hasHydrated, setHasHydrated] = useState<boolean>(false);
 
   // Currency persistence
-  const [currency, setCurrencyState] = useState<CurrencyCode>(() => {
-    try {
-      const saved = localStorage.getItem('shattaan_currency');
-      const validCurrencies: CurrencyCode[] = ['USD', 'EUR', 'GBP', 'AED', 'CAD'];
-      if (saved && validCurrencies.includes(saved as CurrencyCode)) {
-        return saved as CurrencyCode;
-      }
-    } catch {}
-    return 'USD';
-  });
+  const [currency, setCurrencyState] = useState<CurrencyCode>('USD');
 
   const setCurrency = (code: CurrencyCode) => {
     setCurrencyState(code);
@@ -237,12 +157,53 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   // Persistence - Products
-  const [products, setProducts] = useState<Product[]>(() => {
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const categories = INITIAL_CATEGORIES;
+
+  // Persistence - Cart
+  const [cart, setCart] = useState<CartItem[]>([]);
+
+  // Persistence - Wishlist (array of product IDs)
+  const [wishlist, setWishlist] = useState<string[]>(['sht-001', 'sht-002']);
+
+  // Persistence - Orders
+  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
+
+  // Persistence - Customers
+  const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
+
+  // Persistence - Reviews
+  const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
+
+  // Current User
+  const [currentUser, setCurrentUser] = useState<Customer>(SAMPLE_CUSTOMER);
+  const [recentOrder, setRecentOrder] = useState<Order | null>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Hydration effect: Load stored data on client mount to prevent SSR mismatch
+  useEffect(() => {
+    setHasHydrated(true);
     try {
-      const saved = localStorage.getItem('shattaan_products');
-      if (saved) {
-        const parsed: Product[] = JSON.parse(saved);
-        // Ensure all products have valid type (digital | physical)
+      const savedCurrency = localStorage.getItem('shattaan_currency');
+      const validCurrencies: CurrencyCode[] = ['USD', 'EUR', 'GBP', 'AED', 'CAD'];
+      if (savedCurrency && validCurrencies.includes(savedCurrency as CurrencyCode)) {
+        setCurrencyState(savedCurrency as CurrencyCode);
+      }
+
+      const savedWishlist = localStorage.getItem('shattaan_wishlist');
+      if (savedWishlist) {
+        setWishlist(JSON.parse(savedWishlist));
+      }
+
+      const savedCart = localStorage.getItem('shattaan_cart');
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
+      }
+
+      const savedProducts = localStorage.getItem('shattaan_products');
+      if (savedProducts) {
+        const parsed: Product[] = JSON.parse(savedProducts);
         const migrated = parsed.map((p) => {
           if (!p.type) {
             const matched = INITIAL_PRODUCTS.find((init) => init.id === p.id);
@@ -255,162 +216,84 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           }
           return p;
         });
-
-        // Ensure newly added initial products (like digital products) are present
         const existingIds = new Set(migrated.map((p) => p.id));
         const missingInitial = INITIAL_PRODUCTS.filter((init) => !existingIds.has(init.id));
-        return [...migrated, ...missingInitial];
+        setProducts([...migrated, ...missingInitial]);
       }
-      return INITIAL_PRODUCTS;
-    } catch {
-      return INITIAL_PRODUCTS;
+
+      const savedOrders = localStorage.getItem('shattaan_orders');
+      if (savedOrders) {
+        setOrders(JSON.parse(savedOrders));
+      }
+
+      const savedCustomers = localStorage.getItem('shattaan_customers');
+      if (savedCustomers) {
+        setCustomers(JSON.parse(savedCustomers));
+      }
+
+      const savedReviews = localStorage.getItem('shattaan_reviews');
+      if (savedReviews) {
+        setReviews(JSON.parse(savedReviews));
+      }
+    } catch (e) {
+      console.error(e);
     }
-  });
+  }, []);
 
-  const categories = INITIAL_CATEGORIES;
-
-  // Persistence - Cart
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('shattaan_cart');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Persistence - Wishlist (array of product IDs)
-  const [wishlist, setWishlist] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('shattaan_wishlist');
-      return saved ? JSON.parse(saved) : ['sht-001', 'sht-002'];
-    } catch {
-      return ['sht-001', 'sht-002'];
-    }
-  });
-
-  // Persistence - Orders
-  const [orders, setOrders] = useState<Order[]>(() => {
-    try {
-      const saved = localStorage.getItem('shattaan_orders');
-      return saved ? JSON.parse(saved) : INITIAL_ORDERS;
-    } catch {
-      return INITIAL_ORDERS;
-    }
-  });
-
-  // Persistence - Customers
-  const [customers, setCustomers] = useState<Customer[]>(() => {
-    try {
-      const saved = localStorage.getItem('shattaan_customers');
-      return saved ? JSON.parse(saved) : INITIAL_CUSTOMERS;
-    } catch {
-      return INITIAL_CUSTOMERS;
-    }
-  });
-
-  // Persistence - Reviews
-  const [reviews, setReviews] = useState<Review[]>(() => {
-    try {
-      const saved = localStorage.getItem('shattaan_reviews');
-      return saved ? JSON.parse(saved) : INITIAL_REVIEWS;
-    } catch {
-      return INITIAL_REVIEWS;
-    }
-  });
-
-  // Current User
-  const [currentUser, setCurrentUser] = useState<Customer>(SAMPLE_CUSTOMER);
-  const [recentOrder, setRecentOrder] = useState<Order | null>(null);
-  const [appliedDiscount, setAppliedDiscount] = useState<DiscountCode | null>(null);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-
-  // Sync to local storage
+  // Sync to local storage only after hydration
   useEffect(() => {
+    if (!hasHydrated) return;
     try {
       localStorage.setItem('shattaan_products', JSON.stringify(products));
     } catch (e) {
       console.error(e);
     }
-  }, [products]);
+  }, [products, hasHydrated]);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     try {
       localStorage.setItem('shattaan_cart', JSON.stringify(cart));
     } catch (e) {
       console.error(e);
     }
-  }, [cart]);
+  }, [cart, hasHydrated]);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     try {
       localStorage.setItem('shattaan_wishlist', JSON.stringify(wishlist));
     } catch (e) {
       console.error(e);
     }
-  }, [wishlist]);
+  }, [wishlist, hasHydrated]);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     try {
       localStorage.setItem('shattaan_orders', JSON.stringify(orders));
     } catch (e) {
       console.error(e);
     }
-  }, [orders]);
+  }, [orders, hasHydrated]);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     try {
       localStorage.setItem('shattaan_customers', JSON.stringify(customers));
     } catch (e) {
       console.error(e);
     }
-  }, [customers]);
+  }, [customers, hasHydrated]);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     try {
       localStorage.setItem('shattaan_reviews', JSON.stringify(reviews));
     } catch (e) {
       console.error(e);
     }
-  }, [reviews]);
-
-  // Sync state to URL hash for deep linking and back/forward navigation
-  useEffect(() => {
-    const targetHash = buildHashString(currentView, selectedProductId, selectedCategory);
-    const currentHash = window.location.hash || '';
-
-    // If we are on order-success and the current hash already starts with #order-success (possibly with query parameters like ?id=...), preserve it
-    if (currentView === 'order-success' && currentHash.startsWith('#order-success')) {
-      return;
-    }
-
-    if (currentHash !== targetHash && !(currentHash === '' && targetHash === '')) {
-      if (!targetHash) {
-        if (window.location.hash) {
-          history.pushState(null, '', window.location.pathname + window.location.search);
-        }
-      } else {
-        window.location.hash = targetHash;
-      }
-    }
-  }, [currentView, selectedProductId, selectedCategory]);
-
-  // Listen to browser Back/Forward navigation
-  useEffect(() => {
-    const handleHashChange = () => {
-      const parsed = parseHashState(window.location.hash);
-      setCurrentView(parsed.view);
-      if (parsed.productId !== null) {
-        setSelectedProductId(parsed.productId);
-      }
-      if (parsed.category !== null) {
-        setSelectedCategory(parsed.category);
-      }
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [reviews, hasHydrated]);
 
   // Toast manager
   const addToast = (type: ToastMessage['type'], title: string, message: string) => {
@@ -435,15 +318,6 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     });
     return config.prefix ? `${config.symbol}${formatted}` : `${formatted} ${config.symbol}`;
   };
-
-  // Navigation helpers
-  const navigateToProduct = (productId: string) => {
-  window.location.href = `/products/${productId}`;
-};
-
-  const navigateToCategory = (categorySlug: string) => {
-  window.location.href = `/shop/${categorySlug}`;
-};
 
   // Product CRUD
   const addProduct = (newProdData: Omit<Product, 'id' | 'createdAt'>): Product => {
@@ -827,8 +701,6 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   return (
     <StoreContext.Provider
       value={{
-        currentView,
-        setCurrentView,
         selectedProductId,
         setSelectedProductId,
         selectedCategory,
@@ -841,8 +713,6 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setIsCartDrawerOpen,
         quickViewProduct,
         setQuickViewProduct,
-        navigateToProduct,
-        navigateToCategory,
         currency,
         setCurrency,
         formatPrice,

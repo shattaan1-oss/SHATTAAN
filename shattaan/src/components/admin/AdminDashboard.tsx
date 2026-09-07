@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import { Product, Order, Customer } from '../../types';
 import {
@@ -51,7 +52,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     updateProduct,
     deleteProduct,
     updateOrderStatus,
-    setCurrentView,
     addToast,
   } = useStore();
 
@@ -213,13 +213,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </h1>
         </div>
 
-        <button
-          onClick={() => setCurrentView('home')}
+        <Link
+          href="/"
           className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors border border-stone-200 self-start sm:self-auto"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Exit to Customer Storefront</span>
-        </button>
+        </Link>
       </div>
 
       {/* Admin Nav Tabs */}

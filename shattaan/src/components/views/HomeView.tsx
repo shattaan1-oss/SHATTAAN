@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import { ProductCard } from '../common/ProductCard';
 import {
@@ -20,9 +21,6 @@ export const HomeView: React.FC = () => {
   const {
     products,
     categories,
-    setCurrentView,
-    navigateToCategory,
-    navigateToProduct,
     formatPrice,
   } = useStore();
 
@@ -73,28 +71,28 @@ export const HomeView: React.FC = () => {
               </p>
 
               <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-                <button
+                <Link
                   id="hero-explore-btn"
+                  href="/shop"
                   onClick={() => {
-                    setCurrentView('catalog');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   className="min-h-[44px] px-8 py-3.5 sm:py-4 bg-white hover:bg-stone-100 text-stone-950 font-bold text-xs uppercase tracking-widest rounded-xl transition-all shadow-xl hover:shadow-2xl flex items-center justify-center gap-2 group"
                 >
                   <span>Explore Marketplace</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+                </Link>
 
-                <button
+                <Link
                   id="hero-about-btn"
+                  href="/about"
                   onClick={() => {
-                    setCurrentView('about');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   className="min-h-[44px] px-6 py-3.5 sm:py-4 bg-stone-900/80 hover:bg-stone-800 text-stone-200 border border-stone-700/80 font-semibold text-xs uppercase tracking-wider rounded-xl transition-colors backdrop-blur-sm flex items-center justify-center"
                 >
                   Our Heritage
-                </button>
+                </Link>
               </div>
 
               {/* Badges Bar */}
@@ -122,9 +120,10 @@ export const HomeView: React.FC = () => {
               className="lg:col-span-5 relative"
             >
               <div className="relative mx-auto max-w-md bg-stone-900/90 rounded-3xl p-4 border border-stone-800 shadow-2xl backdrop-blur-md">
-                <div
-                  onClick={() => navigateToProduct(heroHeroicProduct.id)}
-                  className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-stone-950 cursor-pointer group"
+                <Link
+                  id="hero-featured-product-link"
+                  href={`/products/${heroHeroicProduct.slug}`}
+                  className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-stone-950 cursor-pointer group block"
                 >
                   <img
                     src={heroHeroicProduct.images[0]}
@@ -154,17 +153,13 @@ export const HomeView: React.FC = () => {
                       </p>
                     </div>
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigateToProduct(heroHeroicProduct.id);
-                      }}
-                      className="w-10 h-10 rounded-xl bg-white text-stone-950 flex items-center justify-center font-bold hover:bg-amber-400 transition-colors shrink-0 shadow-lg"
+                    <div
+                      className="w-10 h-10 rounded-xl bg-white text-stone-950 flex items-center justify-center font-bold group-hover:bg-amber-400 transition-colors shrink-0 shadow-lg"
                     >
                       <ArrowRight className="w-5 h-5" />
-                    </button>
+                    </div>
                   </div>
-                </div>
+                </Link>
               </div>
             </motion.div>
           </div>
@@ -182,24 +177,24 @@ export const HomeView: React.FC = () => {
               Shop by Category
             </h2>
           </div>
-          <button
+          <Link
+            href="/shop"
             onClick={() => {
-              setCurrentView('catalog');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             className="text-xs font-bold uppercase tracking-wider text-stone-900 hover:text-stone-600 flex items-center gap-1.5 transition-colors"
           >
             <span>View All Collections</span>
             <ArrowRight className="w-4 h-4" />
-          </button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((cat, idx) => (
-            <div
+            <Link
               key={cat.id}
-              onClick={() => navigateToCategory(cat.slug)}
-              className="group relative h-80 rounded-3xl overflow-hidden cursor-pointer shadow-md hover:shadow-2xl transition-all duration-500 border border-stone-200"
+              href={`/shop/${cat.slug}`}
+              className="group relative h-80 rounded-3xl overflow-hidden cursor-pointer shadow-md hover:shadow-2xl transition-all duration-500 border border-stone-200 block"
             >
               <img
                 src={cat.image}
@@ -225,7 +220,7 @@ export const HomeView: React.FC = () => {
                   <ArrowRight className="w-4 h-4 text-amber-300" />
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -241,16 +236,16 @@ export const HomeView: React.FC = () => {
               Featured Highlights
             </h2>
           </div>
-          <button
+          <Link
+            href="/shop"
             onClick={() => {
-              setCurrentView('catalog');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             className="text-xs font-bold uppercase tracking-wider text-stone-900 hover:text-stone-600 flex items-center gap-1.5 transition-colors"
           >
             <span>Browse Full Catalog</span>
             <ArrowRight className="w-4 h-4" />
-          </button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -301,15 +296,15 @@ export const HomeView: React.FC = () => {
               </div>
             </div>
 
-            <button
+            <Link
+              href="/about"
               onClick={() => {
-                setCurrentView('about');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs uppercase tracking-widest rounded-xl transition-colors inline-flex items-center gap-2"
             >
               Read Our Brand Story <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -407,16 +402,16 @@ export const HomeView: React.FC = () => {
             <p className="text-xs text-stone-600 max-w-md mt-2 leading-relaxed">
               Our ateliers are currently preparing new editions for this section. Explore our full catalog to discover all available pieces.
             </p>
-            <button
+            <Link
+              href="/shop"
               onClick={() => {
-                setCurrentView('catalog');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               className="mt-6 px-6 py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-2"
             >
               <span>Explore Full Catalog</span>
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

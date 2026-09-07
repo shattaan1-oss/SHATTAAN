@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import { Order, Address } from '../../types';
 import {
@@ -35,8 +36,6 @@ export const AccountView: React.FC<AccountViewProps> = ({ initialTab = 'orders' 
     wishlist,
     products,
     formatPrice,
-    setCurrentView,
-    navigateToProduct,
     addToCart,
     updateCustomerProfile,
     addToast,
@@ -191,12 +190,12 @@ export const AccountView: React.FC<AccountViewProps> = ({ initialTab = 'orders' 
               <p className="text-xs text-stone-500 max-w-sm mx-auto">
                 Once you acquire pieces on shattaan.com, your order tracking, serialized invoices, and shipping milestones will appear here.
               </p>
-              <button
-                onClick={() => setCurrentView('catalog')}
-                className="px-6 py-2.5 bg-stone-950 text-white rounded-xl text-xs font-bold uppercase tracking-wider"
+              <Link
+                href="/shop"
+                className="inline-block px-6 py-2.5 bg-stone-950 text-white rounded-xl text-xs font-bold uppercase tracking-wider"
               >
                 Browse Marketplace
-              </button>
+              </Link>
             </div>
           ) : (
             userOrders.map((order) => (
@@ -272,12 +271,12 @@ export const AccountView: React.FC<AccountViewProps> = ({ initialTab = 'orders' 
                           className="w-14 h-14 rounded-xl object-cover bg-stone-100 border border-stone-200 shrink-0"
                         />
                         <div>
-                          <h4
-                            onClick={() => navigateToProduct(item.productId)}
-                            className="text-xs sm:text-sm font-bold text-stone-950 hover:text-stone-600 cursor-pointer"
+                          <Link
+                            href={`/products/${products.find((p) => p.id === item.productId)?.slug || item.productId}`}
+                            className="text-xs sm:text-sm font-bold text-stone-950 hover:text-stone-600 cursor-pointer block"
                           >
                             {item.title}
-                          </h4>
+                          </Link>
                           <p className="text-[11px] text-stone-500">
                             Quantity: {item.quantity}{' '}
                             {item.selectedColor ? `• ${item.selectedColor}` : ''}{' '}

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import { ProductCard } from '../common/ProductCard';
 import {
@@ -31,12 +32,9 @@ export const CatalogView: React.FC<CatalogViewProps> = ({ initialCategory }) => 
     searchQuery,
     setSearchQuery,
     formatPrice,
-    setCurrentView,
   } = useStore();
 
-  const currentActiveCategory = initialCategory || selectedCategory;useEffect(() => {
-  setSelectedCategory(initialCategory || null);
-}, [initialCategory, setSelectedCategory]);
+  const currentActiveCategory = initialCategory || selectedCategory;
 
   const [productTypeFilter, setProductTypeFilter] = useState<'all' | 'digital' | 'physical'>('all');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating' | 'newest'>('featured');
@@ -141,9 +139,9 @@ export const CatalogView: React.FC<CatalogViewProps> = ({ initialCategory }) => 
       <div className="border-b border-stone-200 pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-stone-500 uppercase tracking-widest mb-1">
-            <button onClick={() => setCurrentView('home')} className="hover:text-stone-900">
+            <Link href="/" className="hover:text-stone-900">
               Home
-            </button>
+            </Link>
             <span>/</span>
             <span className="text-stone-900">
               {selectedCategory
@@ -273,19 +271,20 @@ export const CatalogView: React.FC<CatalogViewProps> = ({ initialCategory }) => 
 
         {/* Category Pills Bar */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          <button
+          <Link
             id="filter-cat-all"
+            href="/shop"
             onClick={() => {
-  window.location.href = '/shop';
-}}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all min-h-[36px] ${
-              selectedCategory === null
+              setSelectedCategory(null);
+            }}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all min-h-[36px] flex items-center justify-center ${
+              !currentActiveCategory
                 ? 'bg-stone-900 text-white shadow-xs'
                 : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'
             }`}
           >
             All Categories
-          </button>
+          </Link>
           {categories.map((cat) => {
             const count = products.filter((p) => {
               const matchCat = p.category === cat.slug;
@@ -293,18 +292,21 @@ export const CatalogView: React.FC<CatalogViewProps> = ({ initialCategory }) => 
               return matchCat && matchType;
             }).length;
             return (
-              <button
+              <Link
                 key={cat.id}
                 id={`filter-cat-${cat.slug}`}
-                onClick={() => setSelectedCategory(cat.slug)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all min-h-[36px] ${
-                  selectedCategory === cat.slug
+                href={`/shop/${cat.slug}`}
+                onClick={() => {
+                  setSelectedCategory(cat.slug);
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all min-h-[36px] flex items-center justify-center ${
+                  currentActiveCategory === cat.slug
                     ? 'bg-stone-900 text-white shadow-xs'
                     : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'
                 }`}
               >
                 {cat.name} ({count})
-              </button>
+              </Link>
             );
           })}
         </div>

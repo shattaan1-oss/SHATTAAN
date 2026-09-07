@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Product } from '../../types';
 import { useStore } from '../../context/StoreContext';
 import { Heart, ShoppingBag, Eye, Star, Check, Sparkles, Box } from 'lucide-react';
@@ -16,7 +17,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
     addToCart,
     toggleWishlist,
     isInWishlist,
-    navigateToProduct,
     setQuickViewProduct,
   } = useStore();
 
@@ -46,9 +46,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
         id={`product-card-list-${product.id}`}
         className="group bg-white rounded-2xl p-4 sm:p-5 border border-stone-200/80 hover:border-stone-400 hover:shadow-lg transition-all duration-300 flex flex-col sm:flex-row gap-5 items-stretch"
       >
-        <div
-          onClick={() => navigateToProduct(product.id)}
-          className="relative w-full sm:w-52 h-52 rounded-xl overflow-hidden bg-stone-100 shrink-0 cursor-pointer"
+        <Link
+          href={`/products/${product.slug}`}
+          className="relative w-full sm:w-52 h-52 rounded-xl overflow-hidden bg-stone-100 shrink-0 cursor-pointer block"
         >
           <img
             src={currentImage}
@@ -74,7 +74,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
               </span>
             )}
           </div>
-        </div>
+        </Link>
 
         <div className="flex-1 w-full min-w-0 flex flex-col justify-between">
           <div>
@@ -112,12 +112,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
               </button>
             </div>
 
-            <h3
-              onClick={() => navigateToProduct(product.id)}
-              className="text-lg font-bold text-stone-900 hover:text-stone-600 transition-colors mt-1 cursor-pointer"
+            <Link
+              href={`/products/${product.slug}`}
+              className="text-lg font-bold text-stone-900 hover:text-stone-600 transition-colors mt-1 cursor-pointer block"
             >
               {product.title}
-            </h3>
+            </Link>
 
             <p className="text-sm text-stone-600 line-clamp-2 mt-1.5 leading-relaxed">
               {product.shortDescription || product.description}
@@ -199,14 +199,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Canvas */}
-      <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden cursor-pointer">
-        <img
-          src={currentImage}
-          alt={product.title}
-          onClick={() => navigateToProduct(product.id)}
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-          loading="lazy"
-        />
+      <div className="relative aspect-[4/5] bg-stone-100 overflow-hidden">
+        <Link href={`/products/${product.slug}`} className="block w-full h-full cursor-pointer">
+          <img
+            src={currentImage}
+            alt={product.title}
+            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+            loading="lazy"
+          />
+        </Link>
 
         {/* Badges Container */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none z-10">
@@ -302,13 +303,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, layout = 'gri
             </div>
           </div>
 
-          <h3
-            onClick={() => navigateToProduct(product.id)}
-            className="font-bold text-stone-900 text-base line-clamp-1 hover:text-stone-600 transition-colors cursor-pointer"
+          <Link
+            href={`/products/${product.slug}`}
+            className="font-bold text-stone-900 text-base line-clamp-1 hover:text-stone-600 transition-colors cursor-pointer block"
             title={product.title}
           >
             {product.title}
-          </h3>
+          </Link>
 
           <p className="text-xs text-stone-600 mt-1 line-clamp-1">
             {product.shortDescription || product.description}

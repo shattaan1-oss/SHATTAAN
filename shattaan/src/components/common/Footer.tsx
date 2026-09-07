@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import {
   ShieldCheck,
@@ -17,8 +18,6 @@ import {
 
 export const Footer: React.FC = () => {
   const {
-    setCurrentView,
-    navigateToCategory,
     categories,
     addToast,
   } = useStore();
@@ -94,12 +93,12 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
         {/* Brand Column */}
         <div className="lg:col-span-2 space-y-4">
-          <div
+          <Link
+            href="/"
             onClick={() => {
-              setCurrentView('home');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-3 cursor-pointer group inline-flex"
           >
             <div className="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center text-stone-950 font-brand text-lg font-bold shadow-md">
               S
@@ -112,7 +111,7 @@ export const Footer: React.FC = () => {
                 shattaan.com
               </span>
             </div>
-          </div>
+          </Link>
 
           <p className="text-xs text-stone-400 leading-relaxed max-w-sm">
             SHATTAAN is a global online luxury marketplace bringing together world-class craftsmanship, modern tailoring, fine leather goods, and refined acoustics.
@@ -157,24 +156,27 @@ export const Footer: React.FC = () => {
           <h4 className="text-xs font-bold uppercase tracking-widest text-white">Collections</h4>
           <ul className="space-y-2 text-xs text-stone-400">
             <li>
-              <button
+              <Link
+                href="/shop"
                 onClick={() => {
-                  setCurrentView('catalog');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="hover:text-amber-400 transition-colors"
               >
                 All Products Catalog
-              </button>
+              </Link>
             </li>
             {categories.map((cat) => (
               <li key={cat.id}>
-                <button
-                  onClick={() => navigateToCategory(cat.slug)}
-                  className="hover:text-amber-400 transition-colors text-left"
+                <Link
+                  href={`/shop/${cat.slug}`}
+                  onClick={() => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-amber-400 transition-colors text-left block"
                 >
                   {cat.name}
-                </button>
+                </Link>
               </li>
             ))}
           </ul>
@@ -185,59 +187,59 @@ export const Footer: React.FC = () => {
           <h4 className="text-xs font-bold uppercase tracking-widest text-white">Customer Care</h4>
           <ul className="space-y-2 text-xs text-stone-400">
             <li>
-              <button
+              <Link
+                href="/contact"
                 onClick={() => {
-                  setCurrentView('contact');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="hover:text-amber-400 transition-colors"
+                className="hover:text-amber-400 transition-colors block"
               >
                 Contact Concierge
-              </button>
+              </Link>
             </li>
             <li>
-              <button
+              <Link
+                href="/account"
                 onClick={() => {
-                  setCurrentView('track-order');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="hover:text-amber-400 transition-colors"
+                className="hover:text-amber-400 transition-colors block"
               >
                 Track Your Shipment
-              </button>
+              </Link>
             </li>
             <li>
-              <button
+              <Link
+                href="/shipping-returns"
                 onClick={() => {
-                  setCurrentView('shipping-returns');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="hover:text-amber-400 transition-colors"
+                className="hover:text-amber-400 transition-colors block"
               >
                 Shipping & Delivery
-              </button>
+              </Link>
             </li>
             <li>
-              <button
+              <Link
+                href="/account"
                 onClick={() => {
-                  setCurrentView('account');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="hover:text-amber-400 transition-colors"
+                className="hover:text-amber-400 transition-colors block"
               >
                 My Account & Orders
-              </button>
+              </Link>
             </li>
             <li>
-              <button
+              <Link
+                href="/wishlist"
                 onClick={() => {
-                  setCurrentView('wishlist');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="hover:text-amber-400 transition-colors"
+                className="hover:text-amber-400 transition-colors block"
               >
                 Saved Wishlist
-              </button>
+              </Link>
             </li>
           </ul>
         </div>
@@ -247,49 +249,49 @@ export const Footer: React.FC = () => {
           <h4 className="text-xs font-bold uppercase tracking-widest text-white">The House</h4>
           <ul className="space-y-2 text-xs text-stone-400">
             <li>
-              <button
+              <Link
+                href="/about"
                 onClick={() => {
-                  setCurrentView('about');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="hover:text-amber-400 transition-colors"
+                className="hover:text-amber-400 transition-colors block"
               >
                 Our Brand Heritage
-              </button>
+              </Link>
             </li>
             <li>
-              <button
+              <Link
+                href="/privacy"
                 onClick={() => {
-                  setCurrentView('privacy');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="hover:text-amber-400 transition-colors"
+                className="hover:text-amber-400 transition-colors block"
               >
                 Privacy Policy
-              </button>
+              </Link>
             </li>
             <li>
-              <button
+              <Link
+                href="/terms"
                 onClick={() => {
-                  setCurrentView('terms');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="hover:text-amber-400 transition-colors"
+                className="hover:text-amber-400 transition-colors block"
               >
                 Terms of Service
-              </button>
+              </Link>
             </li>
             <li>
-              <button
+              <Link
+                href="/admin"
                 onClick={() => {
-                  setCurrentView('admin');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="hover:text-amber-400 transition-colors text-amber-300 font-semibold flex items-center gap-1.5 pt-1"
               >
                 <LayoutDashboard className="w-3.5 h-3.5" />
                 Store Admin Portal
-              </button>
+              </Link>
             </li>
           </ul>
         </div>
