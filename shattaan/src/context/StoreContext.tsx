@@ -239,7 +239,38 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.error(e);
     }
   }, []);
+  // Load products from the real PostgreSQL database
+  useEffect(() => {
+    if (!hasHydrated) return;
 
+    let cancelled = false;
+
+    const loadDatabaseProducts = async () => {
+      try {
+        const response = await fetch('/api/products', {
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Products API returned ${response.status}`);
+        }
+
+        const databaseProducts: Product[] = await response.json();
+
+        if (!cancelled && databaseProducts.length > 0) {
+          setProducts(databaseProducts);
+        }
+      } catch (error) {
+        console.error('Failed to load database products:', error);
+      }
+    };
+
+    loadDatabaseProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasHydrated]);
   // Sync to local storage only after hydration
   useEffect(() => {
     if (!hasHydrated) return;
