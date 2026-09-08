@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getDbProducts } from "@/lib/db/products";
 
 export async function GET() {
@@ -66,6 +67,91 @@ export async function GET() {
 
     return NextResponse.json(
       { error: "Failed to load products" },
+      { status: 500 }
+    );
+  }
+}export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+
+    const {
+      title,
+      slug,
+      type,
+      description,
+      shortDescription,
+      price,
+      compareAtPrice,
+      costPrice,
+      rating,
+      reviewCount,
+      sku,
+      stock,
+      categoryId,
+category,
+      subcategory,
+      tags,
+      images,
+      isFeatured,
+      isTrending,
+      isNewArrival,
+      sizes,
+      specifications,
+    } = body;
+
+    const resolvedCategoryId = categoryId ?? category;
+
+if (!title || !slug || !type || !sku || !resolvedCategoryId) {
+      return NextResponse.json(
+        {
+          error:
+            "Title, slug, type, SKU, and category are required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const product = await prisma.product.create({
+      data: {
+id: `sht-${Date.now().toString().slice(-4)}`,
+        title,
+        slug,
+        type,
+        description: description ?? "",
+        shortDescription: shortDescription ?? "",
+        price: Number(price ?? 0),
+        compareAtPrice:
+          compareAtPrice !== undefined && compareAtPrice !== null
+            ? Number(compareAtPrice)
+            : null,
+        costPrice:
+          costPrice !== undefined && costPrice !== null
+            ? Number(costPrice)
+            : null,
+        rating: Number(rating ?? 0),
+        reviewCount: Number(reviewCount ?? 0),
+        sku,
+        stock: Number(stock ?? 0),
+       category: {
+  connect: { id: resolvedCategoryId },
+},
+        subcategory: subcategory ?? null,
+        tags: Array.isArray(tags) ? tags : [],
+        images: Array.isArray(images) ? images : [],
+        isFeatured: Boolean(isFeatured),
+        isTrending: Boolean(isTrending),
+        isNewArrival: Boolean(isNewArrival),
+        sizes: Array.isArray(sizes) ? sizes : [],
+        specifications: specifications ?? {},
+      },
+    });
+
+    return NextResponse.json(product, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create product:", error);
+
+    return NextResponse.json(
+      { error: "Failed to create product." },
       { status: 500 }
     );
   }

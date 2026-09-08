@@ -54,7 +54,9 @@ export interface StoreContextType {
 
   // Products
   products: Product[];
-  addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Product;
+  addProduct: (
+  product: Omit<Product, 'id' | 'createdAt'>
+) => Promise<Product | null>;
   updateProduct: (id: string, updates: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   updateStock: (id: string, newStock: number) => void;
@@ -351,39 +353,185 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   // Product CRUD
-  const addProduct = (newProdData: Omit<Product, 'id' | 'createdAt'>): Product => {
+  const addProduct = async (
+  newProdData: Omit<Product, 'id' | 'createdAt'>
+): Promise<Product | null> => {
+  try {
+    const response = await fetch('/api/products', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newProdData),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to create product');
+    }
+
     const newProduct: Product = {
-      ...newProdData,
-      id: `sht-${Date.now().toString().slice(-4)}`,
-      createdAt: new Date().toISOString(),
+      ...data,
+      category: data.category?.id ?? newProdData.category,
+      createdAt: data.createdAt ?? new Date().toISOString(),
     };
+
     setProducts((prev) => [newProduct, ...prev]);
-    addToast('success', 'Product Created', `"${newProduct.title}" was added to the catalog.`);
-    return newProduct;
-  };
 
-  const updateProduct = (id: string, updates: Partial<Product>) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
+    addToast(
+      'success',
+      'Product Created',
+      `"${newProduct.title}" was added to the catalog.`
     );
-    addToast('success', 'Product Updated', 'Changes were saved successfully.');
-  };
 
-  const deleteProduct = (id: string) => {
+    return newProduct;
+  } catch (error) {
+    console.error('Failed to create product:', error);
+
+    addToast(
+      'error',
+      'Product Creation Failed',
+      error instanceof Error
+        ? error.message
+        : 'The product could not be saved.'
+    );
+
+    return null;
+  }
+};
+
+  const updateProduct = async (
+  id: string,
+  updates: Partial<Product>
+): Promise<void> => {
+  try {
+    const response = await fetch(`/api/products/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update product');
+    }
+
+    const updatedProduct: Product = {
+      ...data,
+      category: data.category?.id ?? updates.category,
+      createdAt: data.createdAt ?? new Date().toISOString(),
+    };
+
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ...updatedProduct } : p))
+    );
+
+    addToast(
+      'success',
+      'Product Updated',
+      'Changes were saved successfully.'
+    );
+  } catch (error) {
+    console.error('Failed to update product:', error);
+
+    addToast(
+      'error',
+      'Product Update Failed',
+      error instanceof Error
+        ? error.message
+        : 'The product could not be updated.'
+    );
+  }
+};
+
+  const deleteProduct = async (id: string): Promise<void> => {
+  try {
+    const response = await fetch(`/api/products/${id}`, {
+      method: 'DELETE',
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to delete product');
+    }
+
     const prod = products.find((p) => p.id === id);
+
     setProducts((prev) => prev.filter((p) => p.id !== id));
+
     // Also remove from cart & wishlist if deleted
     setCart((prev) => prev.filter((item) => item.productId !== id));
     setWishlist((prev) => prev.filter((wId) => wId !== id));
-    addToast('info', 'Product Removed', `"${prod?.title || 'Product'}" has been deleted.`);
-  };
 
-  const updateStock = (id: string, newStock: number) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, stock: Math.max(0, newStock) } : p))
+    addToast(
+      'info',
+      'Product Removed',
+      `"${prod?.title || 'Product'}" has been deleted.`
     );
-    addToast('info', 'Inventory Adjusted', `Stock level updated to ${newStock} units.`);
-  };
+  } catch (error) {
+    console.error('Failed to delete product:', error);
+
+    addToast(
+      'error',
+      'Product Deletion Failed',
+      error instanceof Error
+        ? error.message
+        : 'The product could not be deleted.'
+    );
+  }
+};
+
+  const updateStock = async (
+  id: string,
+  newStock: number
+): Promise<void> => {
+  try {
+    const response = await fetch(`/api/products/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        stock: Math.max(0, newStock),
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update inventory');
+    }
+
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? { ...p, stock: Math.max(0, newStock) }
+          : p
+      )
+    );
+
+    addToast(
+      'info',
+      'Inventory Adjusted',
+      `Stock level updated to ${Math.max(0, newStock)} units.`
+    );
+  } catch (error) {
+    console.error('Failed to update inventory:', error);
+
+    addToast(
+      'error',
+      'Inventory Update Failed',
+      error instanceof Error
+        ? error.message
+        : 'The stock level could not be updated.'
+    );
+  }
+};
 
   // Cart operations
   const addToCart = (
