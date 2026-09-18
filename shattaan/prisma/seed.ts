@@ -4,6 +4,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import {
   INITIAL_CATEGORIES,
   INITIAL_PRODUCTS,
+  INITIAL_CUSTOMERS,
 } from "../src/data/initialData";
 
 const adapter = new PrismaPg({
@@ -168,6 +169,37 @@ async function main() {
   }
 
   console.log(`Imported ${INITIAL_PRODUCTS.length} products.`);
+  // 3. Import customers
+  for (const customer of INITIAL_CUSTOMERS) {
+    await prisma.customer.upsert({
+      where: {
+        id: customer.id,
+      },
+      update: {
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        joinedDate: new Date(customer.joinedDate),
+        totalOrders: customer.totalOrders,
+        totalSpent: customer.totalSpent,
+        status: customer.status,
+      },
+      create: {
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        joinedDate: new Date(customer.joinedDate),
+        totalOrders: customer.totalOrders,
+        totalSpent: customer.totalSpent,
+        status: customer.status,
+      },
+    });
+
+    console.log(`Imported customer: ${customer.name}`);
+  }
+
+  console.log(`Imported ${INITIAL_CUSTOMERS.length} customers.`);
   console.log("SHATTAAN database seed completed successfully.");
 }
 

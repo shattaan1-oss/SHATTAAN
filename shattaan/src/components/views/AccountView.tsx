@@ -126,7 +126,7 @@ export const AccountView: React.FC<AccountViewProps> = ({ initialTab = 'orders' 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 border-t md:border-t-0 md:border-l border-stone-800 pt-4 md:pt-0 md:pl-8">
           <div>
             <span className="text-[10px] text-stone-400 uppercase tracking-wider block">Total Orders</span>
-            <span className="text-lg font-mono font-bold text-white">{userOrders.length}</span>
+            <span className="text-lg font-mono font-bold text-white">{currentUser.totalOrders}</span>
           </div>
           <div>
             <span className="text-[10px] text-stone-400 uppercase tracking-wider block">Lifetime Spent</span>

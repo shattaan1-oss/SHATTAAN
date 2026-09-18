@@ -608,14 +608,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <td className="py-3 px-4">
                         <select
                           value={order.fulfillmentStatus}
-                          onChange={(e) =>
-                            updateOrderStatus(
-                              order.id,
-                              e.target.value as any,
-                              order.paymentStatus,
-                              order.trackingNumber || `DHL-${Math.floor(1000000 + Math.random() * 9000000)}`
-                            )
-                          }
+                          onChange={async (e) => {
+  const response = await fetch('/api/orders', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      orderId: order.id,
+      fulfillmentStatus: e.target.value,
+    }),
+  });
+
+  if (!response.ok) {
+    console.error('Failed to update order status.');
+    return;
+  }
+
+  updateOrderStatus(
+    order.id,
+    e.target.value as any
+  );
+}}
+
                           className="px-2.5 py-1 text-xs font-bold rounded-lg border border-stone-300 bg-white focus:outline-none focus:border-stone-900 cursor-pointer"
                         >
                           <option value="pending">Pending</option>
@@ -879,11 +894,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="bg-stone-50 p-4 rounded-2xl text-xs space-y-1">
               <p className="font-bold text-stone-900">{selectedOrderForDetail.customer.name}</p>
               <p className="text-stone-600">{selectedOrderForDetail.customer.email}</p>
-              <p className="text-stone-600">{selectedOrderForDetail.customer.shippingAddress.addressLine1}</p>
-              <p className="text-stone-600">
-                {selectedOrderForDetail.customer.shippingAddress.city},{' '}
-                {selectedOrderForDetail.customer.shippingAddress.country}
-              </p>
+             <p className="text-stone-600">{selectedOrderForDetail.shippingAddress?.addressLine1}</p>
+<p className="text-stone-600">
+  {selectedOrderForDetail.shippingAddress?.city},{' '}
+  {selectedOrderForDetail.shippingAddress?.country}
+</p>
             </div>
 
             {/* Items */}

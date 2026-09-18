@@ -6,6 +6,7 @@ import {
   Category,
   CartItem,
   Order,
+OrderItem,
   Customer,
   Review,
   DiscountCode,
@@ -101,7 +102,7 @@ export interface StoreContextType {
     };
     paymentMethod: string;
     notes?: string;
-  }) => Order;
+  }) => Promise<Order | null>;
   updateOrderStatus: (orderId: string, status: OrderStatus, trackingNumber?: string, carrier?: string) => void;
   updatePaymentStatus: (orderId: string, status: PaymentStatus) => void;
   recentOrder: Order | null;
@@ -221,12 +222,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const existingIds = new Set(migrated.map((p) => p.id));
         const missingInitial = INITIAL_PRODUCTS.filter((init) => !existingIds.has(init.id));
         setProducts([...migrated, ...missingInitial]);
-      }
 
-      const savedOrders = localStorage.getItem('shattaan_orders');
-      if (savedOrders) {
-        setOrders(JSON.parse(savedOrders));
-      }
+            }
 
       const savedCustomers = localStorage.getItem('shattaan_customers');
       if (savedCustomers) {
@@ -273,7 +270,83 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       cancelled = true;
     };
   }, [hasHydrated]);
-  // Sync to local storage only after hydration
+// Load orders from the real PostgreSQL database
+useEffect(() => {
+  if (!hasHydrated) return;
+
+  let cancelled = false;
+
+  const loadDatabaseOrders = async () => {
+    try {
+      const response = await fetch('/api/orders', {
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Orders API returned ${response.status}`);
+      }
+
+      const databaseOrders = await response.json();
+
+      if (!cancelled) {
+  setOrders(databaseOrders);
+
+  const currentCustomer = databaseOrders.find(
+    (order: Order) => order.customer?.id === currentUser.id
+  )?.customer;
+
+  if (currentCustomer) {
+    setCurrentUser((prev) => ({
+      ...prev,
+      totalOrders: currentCustomer.totalOrders,
+      totalSpent: Number(currentCustomer.totalSpent),
+    }));
+  }
+}
+    } catch (error) {
+      console.error('Failed to load database orders:', error);
+    }
+  };
+
+  loadDatabaseOrders();
+
+  return () => {
+    cancelled = true;
+  };
+}, [hasHydrated]);
+ // Load customers from the real PostgreSQL database
+useEffect(() => {
+  if (!hasHydrated) return;
+
+  let cancelled = false;
+
+  const loadDatabaseCustomers = async () => {
+    try {
+      const response = await fetch('/api/customer', {
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Customers API returned ${response.status}`);
+      }
+
+      const databaseCustomers = await response.json();
+
+      if (!cancelled) {
+        setCustomers(databaseCustomers);
+      }
+    } catch (error) {
+      console.error('Failed to load database customers:', error);
+    }
+  };
+
+  loadDatabaseCustomers();
+
+  return () => {
+    cancelled = true;
+  };
+}, [hasHydrated]);
+// Sync to local storage only after hydration
   useEffect(() => {
     if (!hasHydrated) return;
     try {
@@ -301,15 +374,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, [wishlist, hasHydrated]);
 
-  useEffect(() => {
-    if (!hasHydrated) return;
-    try {
-      localStorage.setItem('shattaan_orders', JSON.stringify(orders));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [orders, hasHydrated]);
-
+  
   useEffect(() => {
     if (!hasHydrated) return;
     try {
@@ -712,21 +777,63 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   // Orders
-  const placeOrder = (orderData: {
-    customer: {
-      name: string;
-      email: string;
-      phone: string;
-      shippingAddress: Address;
-    };
-    paymentMethod: string;
-    notes?: string;
-  }): Order => {
-    const randomSuffix = Math.floor(10000 + Math.random() * 90000);
+const placeOrder = async (orderData: {
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
+    shippingAddress: Address;
+  };
+  paymentMethod: string;
+  notes?: string;
+}): Promise<Order | null> => {
+  try {
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        customerId: currentUser.id,
+        customer: {
+          id: currentUser.id,
+          name: orderData.customer.name,
+          email: orderData.customer.email,
+          phone: orderData.customer.phone,
+          shippingAddress: orderData.customer.shippingAddress,
+        },
+        items: cart.map((item) => ({
+          productId: item.productId,
+          title: item.title,
+          price: item.price,
+          image: item.image,
+          selectedColor: item.selectedColor,
+          selectedSize: item.selectedSize,
+          quantity: item.quantity,
+        })),
+        subtotal: cartSubtotal,
+        discount: discountAmount,
+        shippingFee: shippingAmount,
+        tax: taxAmount,
+        total: cartTotal,
+        appliedPromoCode: appliedDiscount?.code,
+        paymentMethod: orderData.paymentMethod,
+        paymentStatus: 'pending',
+        fulfillmentStatus: 'processing',
+        notes: orderData.notes,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to create order.');
+    }
+
     const newOrder: Order = {
-      id: `ord-${Date.now().toString().slice(-5)}`,
-      orderNumber: `SHT-2026-${randomSuffix}`,
-      date: new Date().toISOString(),
+      id: data.id,
+      orderNumber: data.orderNumber,
+      date: data.createdAt ?? new Date().toISOString(),
       customer: {
         id: currentUser.id,
         name: orderData.customer.name,
@@ -734,50 +841,49 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         phone: orderData.customer.phone,
         shippingAddress: orderData.customer.shippingAddress,
       },
-      items: cart.map((item) => ({
+      items: data.items.map((item: OrderItem) => ({
         productId: item.productId,
         title: item.title,
-        price: item.price,
+        price: Number(item.price),
         image: item.image,
-        selectedColor: item.selectedColor,
-        selectedSize: item.selectedSize,
+        selectedColor: item.selectedColor ?? undefined,
+        selectedSize: item.selectedSize ?? undefined,
         quantity: item.quantity,
+        isDigital: item.isDigital ?? false,
+        downloadUrl: item.downloadUrl ?? undefined,
       })),
-      subtotal: cartSubtotal,
-      discount: discountAmount,
-      appliedPromoCode: appliedDiscount?.code,
-      shippingFee: shippingAmount,
-      tax: taxAmount,
-      total: cartTotal,
-      paymentMethod: orderData.paymentMethod,
-      paymentStatus: 'paid',
-      fulfillmentStatus: 'processing',
-      trackingNumber: `SHT-${Math.floor(100000000 + Math.random() * 900000000)}`,
-      trackingCarrier: 'SHATTAAN Concierge Air',
-      estimatedDeliveryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0],
-      notes: orderData.notes,
+      subtotal: Number(data.subtotal),
+      discount: Number(data.discount),
+      shippingFee: Number(data.shippingFee),
+      tax: Number(data.tax),
+      total: Number(data.total),
+      appliedPromoCode: data.appliedPromoCode ?? undefined,
+      paymentMethod: data.paymentMethod,
+      paymentStatus: data.paymentStatus,
+      fulfillmentStatus: data.fulfillmentStatus,
+      trackingNumber: data.trackingNumber ?? undefined,
+      trackingCarrier: data.trackingCarrier ?? undefined,
+      estimatedDeliveryDate: data.estimatedDeliveryDate
+        ? String(data.estimatedDeliveryDate).split('T')[0]
+        : undefined,
+      notes: data.notes ?? undefined,
     };
 
-    // Deduct stock
     setProducts((prevProducts) =>
-      prevProducts.map((p) => {
-        const cartItem = cart.find((c) => c.productId === p.id);
-        if (cartItem) {
-          return {
-            ...p,
-            stock: Math.max(0, p.stock - cartItem.quantity),
-          };
-        }
-        return p;
+      prevProducts.map((product) => {
+        const cartItem = cart.find((item) => item.productId === product.id);
+
+        if (!cartItem) return product;
+
+        return {
+          ...product,
+          stock: Math.max(0, product.stock - cartItem.quantity),
+        };
       })
     );
 
-    // Save order
     setOrders((prev) => [newOrder, ...prev]);
 
-    // Update customer stats
     setCurrentUser((prev) => ({
       ...prev,
       totalOrders: prev.totalOrders + 1,
@@ -787,15 +893,34 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setRecentOrder(newOrder);
     clearCart();
     setAppliedDiscount(null);
-    return newOrder;
-  };
 
-  const updateOrderStatus = (
-    orderId: string,
-    status: OrderStatus,
-    trackingNumber?: string,
-    carrier?: string
-  ) => {
+    addToast(
+      'success',
+      'Order Created',
+      `Order ${newOrder.orderNumber} was saved successfully.`
+    );
+
+    return newOrder;
+  } catch (error) {
+    console.error('Failed to place order:', error);
+
+    addToast(
+      'error',
+      'Order Failed',
+      error instanceof Error
+        ? error.message
+        : 'The order could not be created.'
+    );
+
+    return null;
+  }
+};
+    const updateOrderStatus = (
+  orderId: string,
+  status: OrderStatus,
+  trackingNumber?: string,
+  carrier?: string
+) => {
     setOrders((prev) =>
       prev.map((o) => {
         if (o.id === orderId) {

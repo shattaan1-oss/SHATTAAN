@@ -75,7 +75,7 @@ export const CheckoutView: React.FC = () => {
     addToast('info', 'Address Filled', 'Sample luxury shipping profile loaded.');
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (isProcessing) return;
@@ -103,8 +103,8 @@ export const CheckoutView: React.FC = () => {
       phone,
     };
 
-    setTimeout(() => {
-      const order = placeOrder({
+    setTimeout(async () => {
+      const order = await placeOrder({
         customer: {
           name: fullName,
           email,
@@ -120,7 +120,12 @@ export const CheckoutView: React.FC = () => {
         notes: orderNotes,
       });
 
-      setIsProcessing(false);
+      if (!order) {
+  setIsProcessing(false);
+  return;
+}
+
+setIsProcessing(false);
 
       // Trigger Celebration Confetti
       try {

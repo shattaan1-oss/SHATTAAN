@@ -86,8 +86,8 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({ initialOrder
           <CheckCircle2 className="w-9 h-9" />
         </div>
         <span className="text-xs font-bold uppercase tracking-widest text-emerald-800">
-          Payment Confirmed
-        </span>
+  {order.paymentStatus === 'paid' ? 'Payment Confirmed' : 'Payment Pending'}
+</span>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-stone-950">
           Thank you for choosing SHATTAAN
         </h1>

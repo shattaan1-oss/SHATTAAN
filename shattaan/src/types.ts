@@ -113,6 +113,7 @@ export interface Order {
     shippingAddress: Address;
     billingAddress?: Address;
   };
+shippingAddress?: Address;
   items: OrderItem[];
   subtotal: number;
   discount: number;
