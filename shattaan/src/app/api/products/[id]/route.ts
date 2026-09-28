@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/../auth";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -10,6 +11,22 @@ export async function PATCH(
   context: RouteContext
 ) {
   try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Administrator access required." },
+        { status: 403 }
+      );
+    }
+
     const { id } = await context.params;
     const body = await request.json();
 
@@ -30,50 +47,52 @@ export async function PATCH(
     const resolvedCategoryId = categoryId ?? category;
 
     if (
-  title === undefined &&
-  sku === undefined &&
-  resolvedCategoryId === undefined &&
-  price === undefined &&
-  compareAtPrice === undefined &&
-  stock === undefined &&
-  description === undefined &&
-  images === undefined &&
-  isFeatured === undefined &&
-  tags === undefined
-) {
-  return NextResponse.json(
-    { error: "No product changes were provided." },
-    { status: 400 }
-  );
-}
+      title === undefined &&
+      sku === undefined &&
+      resolvedCategoryId === undefined &&
+      price === undefined &&
+      compareAtPrice === undefined &&
+      stock === undefined &&
+      description === undefined &&
+      images === undefined &&
+      isFeatured === undefined &&
+      tags === undefined
+    ) {
+      return NextResponse.json(
+        { error: "No product changes were provided." },
+        { status: 400 }
+      );
+    }
 
     const product = await prisma.product.update({
       where: { id },
       data: {
-  ...(title !== undefined && { title }),
-  ...(sku !== undefined && { sku }),
-  ...(resolvedCategoryId !== undefined && {
-    category: {
-      connect: { id: resolvedCategoryId },
-    },
-  }),
-  ...(price !== undefined && { price: Number(price) }),
-  ...(compareAtPrice !== undefined && {
-    compareAtPrice:
-      compareAtPrice === null ? null : Number(compareAtPrice),
-  }),
-  ...(stock !== undefined && {
-    stock: Math.max(0, Number(stock)),
-  }),
-  ...(description !== undefined && { description }),
-  ...(images !== undefined && {
-    images: Array.isArray(images) ? images : [],
-  }),
-  ...(isFeatured !== undefined && { isFeatured: Boolean(isFeatured) }),
-  ...(tags !== undefined && {
-    tags: Array.isArray(tags) ? tags : [],
-  }),
-},
+        ...(title !== undefined && { title }),
+        ...(sku !== undefined && { sku }),
+        ...(resolvedCategoryId !== undefined && {
+          category: {
+            connect: { id: resolvedCategoryId },
+          },
+        }),
+        ...(price !== undefined && { price: Number(price) }),
+        ...(compareAtPrice !== undefined && {
+          compareAtPrice:
+            compareAtPrice === null ? null : Number(compareAtPrice),
+        }),
+        ...(stock !== undefined && {
+          stock: Math.max(0, Number(stock)),
+        }),
+        ...(description !== undefined && { description }),
+        ...(images !== undefined && {
+          images: Array.isArray(images) ? images : [],
+        }),
+        ...(isFeatured !== undefined && {
+          isFeatured: Boolean(isFeatured),
+        }),
+        ...(tags !== undefined && {
+          tags: Array.isArray(tags) ? tags : [],
+        }),
+      },
     });
 
     return NextResponse.json(product);
@@ -86,11 +105,28 @@ export async function PATCH(
     );
   }
 }
+
 export async function DELETE(
   request: Request,
   context: RouteContext
 ) {
   try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Administrator access required." },
+        { status: 403 }
+      );
+    }
+
     const { id } = await context.params;
 
     const product = await prisma.product.findUnique({

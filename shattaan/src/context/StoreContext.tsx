@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { useSession } from 'next-auth/react';
 import {
   Product,
   Category,
@@ -137,8 +138,8 @@ const CURRENCY_RATES: Record<CurrencyCode, { symbol: string; rate: number; prefi
 };
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
-
 export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { data: session } = useSession();
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -271,17 +272,16 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
   }, [hasHydrated]);
 // Load orders from the real PostgreSQL database
+// Load orders from the real PostgreSQL database
 useEffect(() => {
   if (!hasHydrated) return;
+  if (!session?.user) return;
 
   let cancelled = false;
 
   const loadDatabaseOrders = async () => {
     try {
-      const response = await fetch('/api/orders', {
-        cache: 'no-store',
-      });
-
+      const response = await fetch('/api/orders/me', { cache: 'no-store' });
       if (!response.ok) {
         throw new Error(`Orders API returned ${response.status}`);
       }
@@ -291,17 +291,6 @@ useEffect(() => {
       if (!cancelled) {
   setOrders(databaseOrders);
 
-  const currentCustomer = databaseOrders.find(
-    (order: Order) => order.customer?.id === currentUser.id
-  )?.customer;
-
-  if (currentCustomer) {
-    setCurrentUser((prev) => ({
-      ...prev,
-      totalOrders: currentCustomer.totalOrders,
-      totalSpent: Number(currentCustomer.totalSpent),
-    }));
-  }
 }
     } catch (error) {
       console.error('Failed to load database orders:', error);
@@ -314,39 +303,49 @@ useEffect(() => {
     cancelled = true;
   };
 }, [hasHydrated]);
- // Load customers from the real PostgreSQL database
+  // Sync to local storage only after hydration
+  // Load the signed-in customer's database profile
 useEffect(() => {
   if (!hasHydrated) return;
+  if (!session?.user) return;
 
   let cancelled = false;
 
-  const loadDatabaseCustomers = async () => {
+  const loadDatabaseCustomer = async () => {
     try {
-      const response = await fetch('/api/customer', {
+      const response = await fetch('/api/customer/me', {
         cache: 'no-store',
       });
 
-      if (!response.ok) {
-        throw new Error(`Customers API returned ${response.status}`);
-      }
+     if (response.status === 404) {
+  return;
+}
 
-      const databaseCustomers = await response.json();
+if (!response.ok) {
+  throw new Error(`Customer API returned ${response.status}`);
+}
 
-      if (!cancelled) {
-        setCustomers(databaseCustomers);
+const databaseCustomer = await response.json();
+
+      if (!cancelled && databaseCustomer) {
+        setCurrentUser((prev) => ({
+          ...prev,
+          ...databaseCustomer,
+          totalSpent: Number(databaseCustomer.totalSpent),
+        }));
       }
     } catch (error) {
-      console.error('Failed to load database customers:', error);
+      console.error('Failed to load database customer:', error);
     }
   };
 
-  loadDatabaseCustomers();
+  loadDatabaseCustomer();
 
   return () => {
     cancelled = true;
   };
 }, [hasHydrated]);
-// Sync to local storage only after hydration
+
   useEffect(() => {
     if (!hasHydrated) return;
     try {

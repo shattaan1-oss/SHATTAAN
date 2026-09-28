@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { useStore } from '../../context/StoreContext';
 import { CurrencyCode } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
@@ -473,7 +474,16 @@ export const Header: React.FC = () => {
                       <LayoutDashboard className="w-4 h-4 text-amber-700" />
                       <span>Store Admin Dashboard</span>
                     </Link>
-                  </div>
+                  </div><button
+  type="button"
+  onClick={async () => {
+  await signOut({ redirect: false });
+  window.location.href = "/";
+}}
+  className="w-full px-4 py-2 text-left text-xs font-semibold text-stone-700 hover:bg-stone-50"
+>
+  Sign Out
+</button>
                 </div>
               )}
             </div>

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/../auth";
 import { prisma } from "@/lib/prisma";
 import { getDbProducts } from "@/lib/db/products";
 
@@ -70,8 +71,26 @@ export async function GET() {
       { status: 500 }
     );
   }
-}export async function POST(request: Request) {
+}
+
+export async function POST(request: Request) {
   try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Administrator access required." },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
 
     const {
@@ -88,7 +107,7 @@ export async function GET() {
       sku,
       stock,
       categoryId,
-category,
+      category,
       subcategory,
       tags,
       images,
@@ -101,7 +120,7 @@ category,
 
     const resolvedCategoryId = categoryId ?? category;
 
-if (!title || !slug || !type || !sku || !resolvedCategoryId) {
+    if (!title || !slug || !type || !sku || !resolvedCategoryId) {
       return NextResponse.json(
         {
           error:
@@ -113,7 +132,7 @@ if (!title || !slug || !type || !sku || !resolvedCategoryId) {
 
     const product = await prisma.product.create({
       data: {
-id: `sht-${Date.now().toString().slice(-4)}`,
+        id: `sht-${Date.now().toString().slice(-4)}`,
         title,
         slug,
         type,
@@ -132,9 +151,9 @@ id: `sht-${Date.now().toString().slice(-4)}`,
         reviewCount: Number(reviewCount ?? 0),
         sku,
         stock: Number(stock ?? 0),
-       category: {
-  connect: { id: resolvedCategoryId },
-},
+        category: {
+          connect: { id: resolvedCategoryId },
+        },
         subcategory: subcategory ?? null,
         tags: Array.isArray(tags) ? tags : [],
         images: Array.isArray(images) ? images : [],
