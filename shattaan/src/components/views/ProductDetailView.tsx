@@ -337,7 +337,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ initialPro
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         {/* Left Gallery (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-stone-100 border border-stone-200 shadow-md">
+          <div className="relative aspect-[3/2] rounded-3xl overflow-hidden bg-stone-100 border border-stone-200 shadow-md">
             <img
               src={product.images[selectedImageIndex] || product.images[0]}
               alt={product.title}
@@ -1228,3 +1228,5 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ initialPro
     </div>
   );
 };
+
+
