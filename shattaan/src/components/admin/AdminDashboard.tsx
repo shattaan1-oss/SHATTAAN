@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import { Product, Order, Customer } from '../../types';
@@ -83,6 +83,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [orderSearch, setOrderSearch] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<Order | null>(null);
+  const [adminOrders, setAdminOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    const loadAdminOrders = async () => {
+      try {
+        const response = await fetch('/api/admin/orders', { cache: 'no-store' });
+        if (!response.ok) {
+          console.error('Failed to load admin orders.');
+          return;
+        }
+        const data = await response.json();
+        setAdminOrders(data);
+      } catch (error) {
+        console.error('Failed to load admin orders:', error);
+      }
+    };
+    loadAdminOrders();
+  }, []);
+
 
   // Calculate Metrics
   const totalRevenue = orders.reduce((acc, o) => acc + (o.paymentStatus === 'paid' ? o.total : 0), 0);
@@ -182,7 +201,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return true;
   });
 
-  const filteredAdminOrders = orders.filter((o) => {
+  const filteredAdminOrders = adminOrders.filter((o) => {
     if (orderStatusFilter !== 'all' && o.fulfillmentStatus !== orderStatusFilter) {
       return false;
     }
@@ -257,7 +276,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           }`}
         >
           <ShoppingBag className="w-4 h-4" />
-          <span>Orders ({orders.length})</span>
+          <span>Orders ({adminOrders.length})</span>
         </button>
 
         <button
@@ -297,7 +316,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <ShoppingBag className="w-4 h-4 text-stone-700" />
               </div>
               <div className="text-2xl font-extrabold text-stone-950">
-                {orders.length}
+                {adminOrders.length}
               </div>
               <p className="text-[11px] text-stone-500">
                 {pendingOrders} awaiting fulfillment
@@ -347,7 +366,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
               <div className="divide-y divide-stone-100">
-                {orders.slice(0, 4).map((o) => (
+                {adminOrders.slice(0, 4).map((o) => (
                   <div key={o.id} className="py-3 flex items-center justify-between text-xs">
                     <div>
                       <span className="font-mono font-bold text-stone-950 block">{o.orderNumber}</span>
@@ -609,7 +628,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <select
                           value={order.fulfillmentStatus}
                           onChange={async (e) => {
-  const response = await fetch('/api/orders', {
+  const response = await fetch('/api/admin/orders', {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
