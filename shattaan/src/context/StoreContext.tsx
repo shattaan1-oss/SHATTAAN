@@ -270,7 +270,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return () => {
       cancelled = true;
     };
-  }, [hasHydrated]);
+  }, [hasHydrated, session?.user]);
 // Load orders from the real PostgreSQL database
 // Load orders from the real PostgreSQL database
 useEffect(() => {
@@ -302,7 +302,7 @@ useEffect(() => {
   return () => {
     cancelled = true;
   };
-}, [hasHydrated]);
+}, [hasHydrated, session?.user]);
   // Sync to local storage only after hydration
   // Load the signed-in customer's database profile
 useEffect(() => {
@@ -344,7 +344,7 @@ const databaseCustomer = await response.json();
   return () => {
     cancelled = true;
   };
-}, [hasHydrated]);
+}, [hasHydrated, session?.user]);
 
   useEffect(() => {
     if (!hasHydrated) return;
