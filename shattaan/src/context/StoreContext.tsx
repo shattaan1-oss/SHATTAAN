@@ -131,8 +131,8 @@ export interface StoreContextType {
 
 const CURRENCY_RATES: Record<CurrencyCode, { symbol: string; rate: number; prefix: boolean }> = {
   USD: { symbol: '$', rate: 1.0, prefix: true },
-  EUR: { symbol: '€', rate: 0.92, prefix: false },
-  GBP: { symbol: '£', rate: 0.79, prefix: true },
+  EUR: { symbol: 'â‚¬', rate: 0.92, prefix: false },
+  GBP: { symbol: 'Â£', rate: 0.79, prefix: true },
   AED: { symbol: 'AED ', rate: 3.67, prefix: true },
   CAD: { symbol: 'CA$', rate: 1.36, prefix: true },
 };
@@ -288,10 +288,47 @@ useEffect(() => {
 
       const databaseOrders = await response.json();
 
-      if (!cancelled) {
-  setOrders(databaseOrders);
+      const mappedOrders: Order[] = databaseOrders.map((order: any) => ({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        date: order.createdAt ?? order.date ?? new Date().toISOString(),
+        customer: {
+          id: order.customer?.id ?? session.user.customerId,
+          name: order.customer?.name ?? session.user.name ?? '',
+          email: order.customer?.email ?? session.user.email ?? '',
+          phone: order.customer?.phone ?? '',
+          shippingAddress: order.shippingAddress,
+          billingAddress: order.billingAddress ?? undefined,
+        },
+        items: (order.items ?? []).map((item: any) => ({
+          productId: item.productId,
+          title: item.title,
+          price: Number(item.price),
+          image: item.image,
+          selectedColor: item.selectedColor ?? undefined,
+          selectedSize: item.selectedSize ?? undefined,
+          quantity: item.quantity,
+          isDigital: item.isDigital ?? false,
+          downloadUrl: item.downloadUrl ?? undefined,
+        })),
+        subtotal: Number(order.subtotal),
+        discount: Number(order.discount),
+        shippingFee: Number(order.shippingFee),
+        tax: Number(order.tax),
+        total: Number(order.total),
+        appliedPromoCode: order.appliedPromoCode ?? undefined,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        fulfillmentStatus: order.fulfillmentStatus,
+        trackingNumber: order.trackingNumber ?? undefined,
+        trackingCarrier: order.trackingCarrier ?? undefined,
+        estimatedDeliveryDate: order.estimatedDeliveryDate ? String(order.estimatedDeliveryDate).split('T')[0] : undefined,
+        notes: order.notes ?? undefined,
+      }));
 
-}
+      if (!cancelled) {
+        setOrders(mappedOrders);
+      }
     } catch (error) {
       console.error('Failed to load database orders:', error);
     }

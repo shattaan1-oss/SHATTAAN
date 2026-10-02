@@ -210,7 +210,7 @@ export const AccountView: React.FC<AccountViewProps> = ({ initialTab = 'orders' 
                       <span className="text-stone-400 uppercase tracking-wider font-semibold block text-[10px]">
                         Order Number
                       </span>
-                      <span className="font-mono font-bold text-stone-950">{order.orderNumber}</span>
+                      <Link href={`/account/orders/${order.id}`} className="font-mono font-bold text-stone-950 hover:underline">{order.orderNumber}</Link>
                     </div>
 
                     <div className="border-l border-stone-200 pl-4">
@@ -279,8 +279,8 @@ export const AccountView: React.FC<AccountViewProps> = ({ initialTab = 'orders' 
                           </Link>
                           <p className="text-[11px] text-stone-500">
                             Quantity: {item.quantity}{' '}
-                            {item.selectedColor ? `• ${item.selectedColor}` : ''}{' '}
-                            {item.selectedSize ? `• ${item.selectedSize}` : ''}
+                            {item.selectedColor ? `â€¢ ${item.selectedColor}` : ''}{' '}
+                            {item.selectedSize ? `â€¢ ${item.selectedSize}` : ''}
                           </p>
                         </div>
                       </div>
@@ -297,7 +297,7 @@ export const AccountView: React.FC<AccountViewProps> = ({ initialTab = 'orders' 
                   <div className="flex items-center gap-2 text-stone-600">
                     <Truck className="w-4 h-4 text-stone-900" />
                     <span>
-                      Courier: <strong>{order.trackingCarrier || 'SHATTAAN Courier'}</strong> • Tracking:{' '}
+                      Courier: <strong>{order.trackingCarrier || 'SHATTAAN Courier'}</strong> â€¢ Tracking:{' '}
                       <strong className="font-mono">{order.trackingNumber || 'Pending'}</strong>
                     </span>
                   </div>
