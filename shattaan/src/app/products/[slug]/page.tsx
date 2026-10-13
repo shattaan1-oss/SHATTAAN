@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ProductDetailView } from '@/components/views/ProductDetailView';
-import { getProductBySlug, getAllProducts } from '@/lib/data/products';
+import { getDbProductBySlug } from '@/lib/db/products';
 
 interface ProductPageProps {
   params: Promise<{
@@ -13,7 +13,7 @@ export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const product = await getDbProductBySlug(slug);
 
   if (!product) {
     return {
@@ -54,11 +54,67 @@ export async function generateMetadata({
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const product = await getDbProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
-
-  return <ProductDetailView initialProduct={product} slug={slug} />;
+    const formattedProduct = {
+  id: product.id,
+  title: product.title,
+  slug: product.slug,
+  type: product.type,
+  description: product.description,
+  shortDescription: product.shortDescription,
+  price: Number(product.price),
+  compareAtPrice:
+    product.compareAtPrice !== null
+      ? Number(product.compareAtPrice)
+      : undefined,
+  costPrice:
+    product.costPrice !== null
+      ? Number(product.costPrice)
+      : undefined,
+  rating: product.rating,
+  reviewCount: product.reviewCount,
+  sku: product.sku,
+  stock: product.stock,
+  category: product.category.id,
+  subcategory: product.subcategory ?? undefined,
+  tags: product.tags,
+  images: product.images,
+  isFeatured: product.isFeatured,
+  isTrending: product.isTrending,
+  isNewArrival: product.isNewArrival,
+  colors: product.colors.map((color) => ({
+    name: color.name,
+    hex: color.hex,
+    inStock: color.inStock,
+  })),
+  sizes: product.sizes,
+  specifications:
+  product.specifications &&
+  typeof product.specifications === 'object' &&
+  !Array.isArray(product.specifications)
+    ? (product.specifications as Record<string, string>)
+    : {},
+  digitalDetails: product.digitalDetails
+    ? {
+        format: product.digitalDetails.format,
+        fileSize: product.digitalDetails.fileSize ?? undefined,
+        deliveryMethod: product.digitalDetails.deliveryMethod ?? undefined,
+        license: product.digitalDetails.license ?? undefined,
+        previewUrl: product.digitalDetails.previewUrl ?? undefined,
+      }
+    : undefined,
+  physicalDetails: product.physicalDetails
+    ? {
+        weight: product.physicalDetails.weight ?? undefined,
+        dimensions: product.physicalDetails.dimensions ?? undefined,
+        shippingClass: product.physicalDetails.shippingClass ?? undefined,
+      }
+    : undefined,
+  createdAt: product.createdAt.toISOString(),
+};
+  return <ProductDetailView initialProduct={formattedProduct} slug={slug} />;
 }
