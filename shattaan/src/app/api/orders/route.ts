@@ -150,10 +150,16 @@ export async function POST(request: Request) {
       // Pricing is intentionally server-controlled.
       // Discounts, shipping and tax will be connected to
       // their real services in later phases.
+            // Pricing is calculated server-side from verified database values.
+      // Keep these rules aligned with the storefront until real tax/shipping
+      // services are connected.
       const discount = 0;
-      const shippingFee = 0;
-      const tax = 0;
-      const total = subtotal;
+      const taxable = Math.max(0, subtotal - discount);
+      const hasPhysicalItems = verifiedItems.some((item) => !item.isDigital);
+      const shippingFee =
+        !hasPhysicalItems || subtotal >= 250 ? 0 : 25;
+      const tax = Math.round(taxable * 0.0825 * 100) / 100;
+      const total = taxable + shippingFee + tax;
 
       const orderNumber = `SHT-${new Date().getFullYear()}-${Date.now()
         .toString()
