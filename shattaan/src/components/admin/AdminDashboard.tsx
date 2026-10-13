@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import { Product, Order, Customer } from '../../types';
@@ -56,9 +56,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   } = useStore();
 
   const normalizedTab =
-    initialTab === 'dashboard' ? 'overview' : (initialTab as 'overview' | 'products' | 'orders' | 'customers');
+    initialTab === 'dashboard' ? 'overview' : initialTab;
 
-  const [adminTab, setAdminTab] = useState<'overview' | 'products' | 'orders' | 'customers'>(normalizedTab);
+  const [adminTab, setAdminTab] = useState<
+    'overview' | 'products' | 'orders' | 'customers' | 'settings'
+  >(normalizedTab);
 
   // Product Modal State
   const [isProductModalOpen, setIsProductModalOpen] = useState(
@@ -83,25 +85,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [orderSearch, setOrderSearch] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<Order | null>(null);
-  const [adminOrders, setAdminOrders] = useState<Order[]>([]);
-
-  useEffect(() => {
-    const loadAdminOrders = async () => {
-      try {
-        const response = await fetch('/api/admin/orders', { cache: 'no-store' });
-        if (!response.ok) {
-          console.error('Failed to load admin orders.');
-          return;
-        }
-        const data = await response.json();
-        setAdminOrders(data);
-      } catch (error) {
-        console.error('Failed to load admin orders:', error);
-      }
-    };
-    loadAdminOrders();
-  }, []);
-
 
   // Calculate Metrics
   const totalRevenue = orders.reduce((acc, o) => acc + (o.paymentStatus === 'paid' ? o.total : 0), 0);
@@ -201,7 +184,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return true;
   });
 
-  const filteredAdminOrders = adminOrders.filter((o) => {
+  const filteredAdminOrders = orders.filter((o) => {
     if (orderStatusFilter !== 'all' && o.fulfillmentStatus !== orderStatusFilter) {
       return false;
     }
@@ -276,7 +259,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           }`}
         >
           <ShoppingBag className="w-4 h-4" />
-          <span>Orders ({adminOrders.length})</span>
+          <span>Orders ({orders.length})</span>
         </button>
 
         <button
@@ -316,7 +299,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <ShoppingBag className="w-4 h-4 text-stone-700" />
               </div>
               <div className="text-2xl font-extrabold text-stone-950">
-                {adminOrders.length}
+                {orders.length}
               </div>
               <p className="text-[11px] text-stone-500">
                 {pendingOrders} awaiting fulfillment
@@ -366,7 +349,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
               <div className="divide-y divide-stone-100">
-                {adminOrders.slice(0, 4).map((o) => (
+                {orders.slice(0, 4).map((o) => (
                   <div key={o.id} className="py-3 flex items-center justify-between text-xs">
                     <div>
                       <span className="font-mono font-bold text-stone-950 block">{o.orderNumber}</span>
@@ -628,7 +611,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <select
                           value={order.fulfillmentStatus}
                           onChange={async (e) => {
-  const response = await fetch('/api/admin/orders', {
+  const response = await fetch('/api/orders', {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -713,6 +696,81 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+      {/* TAB 5: STORE SETTINGS */}
+      {adminTab === 'settings' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl border border-stone-200 shadow-xs overflow-hidden">
+            <div className="p-6 border-b border-stone-200">
+              <h3 className="text-base font-bold text-stone-950">Store Settings</h3>
+              <p className="text-xs text-stone-500 mt-1">
+                SHATTAAN production configuration and store information.
+              </p>
+            </div>
+
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-2xl bg-stone-50 border border-stone-200 p-4">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-stone-500">
+                  Store
+                </p>
+                <p className="mt-1 font-bold text-stone-950">SHATTAAN</p>
+                <p className="text-xs text-stone-500">shattaan.com</p>
+              </div>
+
+              <div className="rounded-2xl bg-stone-50 border border-stone-200 p-4">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-stone-500">
+                  Environment
+                </p>
+                <p className="mt-1 font-bold text-green-700">Production</p>
+                <p className="text-xs text-stone-500">Vercel production deployment</p>
+              </div>
+
+              <div className="rounded-2xl bg-stone-50 border border-stone-200 p-4">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-stone-500">
+                  Database
+                </p>
+                <p className="mt-1 font-bold text-stone-950">PostgreSQL</p>
+                <p className="text-xs text-stone-500">Connected production database</p>
+              </div>
+
+              <div className="rounded-2xl bg-stone-50 border border-stone-200 p-4">
+                <p className="text-[10px] uppercase tracking-wider font-bold text-stone-500">
+                  Authentication
+                </p>
+                <p className="mt-1 font-bold text-green-700">Auth.js</p>
+                <p className="text-xs text-stone-500">Protected administrator access</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-stone-200 shadow-xs overflow-hidden">
+            <div className="p-6 border-b border-stone-200">
+              <h3 className="text-base font-bold text-stone-950">System Status</h3>
+            </div>
+
+            <div className="p-6 space-y-3 text-xs">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <span className="font-medium text-stone-700">Storefront</span>
+                <span className="font-bold text-green-700">Operational</span>
+              </div>
+
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <span className="font-medium text-stone-700">Product Catalog</span>
+                <span className="font-bold text-green-700">Operational</span>
+              </div>
+
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <span className="font-medium text-stone-700">Orders</span>
+                <span className="font-bold text-green-700">Operational</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-stone-700">Customer Accounts</span>
+                <span className="font-bold text-green-700">Operational</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
