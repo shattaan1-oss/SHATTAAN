@@ -270,8 +270,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               : 'text-stone-400 hover:text-stone-700'
           }`}
         >
-          <Users className="w-4 h-4" />
-          <span>Customers ({customers.length})</span>
+                  <Users className="w-4 h-4" />
+        <span>Customers ({customers.length})</span>
+        </button>
         <button
           onClick={() => setAdminTab('settings')}
           className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold uppercase tracking-wider whitespace-nowrap transition-all ${
@@ -282,7 +283,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         >
           <Sliders className="w-4 h-4" />
           <span>Settings</span>
-        </button>
         </button>
       </div>
 
