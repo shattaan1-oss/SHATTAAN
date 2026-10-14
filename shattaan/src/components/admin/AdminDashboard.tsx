@@ -272,6 +272,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         >
           <Users className="w-4 h-4" />
           <span>Customers ({customers.length})</span>
+        <button
+          onClick={() => setAdminTab('settings')}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold uppercase tracking-wider whitespace-nowrap transition-all ${
+            adminTab === 'settings'
+              ? 'text-stone-950 border-b-2 border-stone-950'
+              : 'text-stone-400 hover:text-stone-700'
+          }`}
+        >
+          <Sliders className="w-4 h-4" />
+          <span>Settings</span>
+        </button>
         </button>
       </div>
 
