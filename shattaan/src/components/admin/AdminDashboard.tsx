@@ -622,7 +622,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <select
                           value={order.fulfillmentStatus}
                           onChange={async (e) => {
-  const response = await fetch('/api/orders', {
+  const response = await fetch('/api/admin/orders', {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
