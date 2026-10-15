@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '../../context/StoreContext';
 import { Order, Address } from '../../types';
@@ -42,6 +42,13 @@ export const AccountView: React.FC<AccountViewProps> = ({ initialTab = 'orders' 
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'orders' | 'addresses' | 'profile'>(initialTab);
+
+useEffect(() => {
+  const saved = window.localStorage.getItem('shattaan-account-tab');
+  if (saved === 'orders' || saved === 'addresses' || saved === 'profile') {
+    setActiveTab(saved);
+  }
+}, []);
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<Order | null>(null);
 
   // Profile Edit State
@@ -144,7 +151,10 @@ export const AccountView: React.FC<AccountViewProps> = ({ initialTab = 'orders' 
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-stone-200 overflow-x-auto pb-px">
         <button
-          onClick={() => setActiveTab('orders')}
+          onClick={() => {
+  setActiveTab('orders');
+  window.localStorage.setItem('shattaan-account-tab', 'orders');
+}}
           className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold uppercase tracking-wider whitespace-nowrap transition-all ${
             activeTab === 'orders'
               ? 'text-stone-950 border-b-2 border-stone-950'
@@ -156,7 +166,10 @@ export const AccountView: React.FC<AccountViewProps> = ({ initialTab = 'orders' 
         </button>
 
         <button
-          onClick={() => setActiveTab('addresses')}
+          onClick={() => {
+  setActiveTab('addresses');
+  window.localStorage.setItem('shattaan-account-tab', 'addresses');
+}}
           className={`flex items-center gap-2 px-5 py-3 text-xs font-extrabold uppercase tracking-wider whitespace-nowrap transition-all ${
             activeTab === 'addresses'
               ? 'text-stone-950 border-b-2 border-stone-950'
